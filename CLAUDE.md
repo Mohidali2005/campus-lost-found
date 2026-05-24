@@ -195,6 +195,49 @@ Changes to existing files:
 - `frontend/js/auth.js`: added Admin nav link (visible only when `user.is_admin=true`)
 - `frontend/js/item.js`: added `addOwnerActions(item)` — injects Delete + Resolve buttons on item detail page for owners and admins
 
+### Post-launch fixes & improvements
+
+**CLIP preloading at server startup**
+- Added `preload_model()` to `backend/services/matching_service.py`
+- Called in `main.py` lifespan via `await asyncio.to_thread(matching_service.preload_model)`
+- CLIP now loads when the server starts so the first item post is instant for all users
+- Wait for `"CLIP model loaded successfully."` in server logs before sending users to the site
+
+**Sidebar navigation**
+- Added a fixed 210px left sidebar to all main pages (`index.html`, `item.html`, `post.html`, `dashboard.html`, `admin.html`)
+- Sidebar filled by `updateSidebar()` in `auth.js`, called automatically at end of `updateNav()`
+- Sidebar links use `?section=` URL param (see section-based filtering below)
+- Mobile: sidebar hidden by default, `☰` hamburger button in navbar toggles it as an overlay
+- Active page highlighted with green left border via `.sidebar-link.active` class
+- `body.has-sidebar` shifts `.page-content` right by 210px on desktop
+
+**Section-based item filtering (replaces type/status dropdowns)**
+- Old approach: `?type=lost` / `?type=found` URL params with separate status dropdown
+- New approach: `?section=lost` / `?section=found` — sections defined by LOGICAL state, not DB field:
+  - `section=lost`  → `GET /items?type=lost&status=open` (still missing)
+  - `section=found` → two parallel API calls merged: `GET /items?type=found` + `GET /items?type=lost&status=resolved`
+  - No section (All Items) → `GET /items` (everything)
+- Type and status dropdowns removed from the search bar — sidebar handles navigation
+- Search bar now has keyword + category only
+
+**Badge logic redesign**
+- Old: showed raw `item.type` (LOST/FOUND) + raw `item.status` (OPEN/RESOLVED) as two separate badges
+- New: single badge reflecting the item's LOGICAL state:
+  - `type=found` OR `status=resolved` → green **FOUND** badge
+  - `type=lost` AND `status=open`     → red **LOST** badge
+- Applied consistently in both `app.js` (cards) and `item.js` (detail page)
+- Resolved cards are dimmed (`.card-resolved` CSS class) so open items stand out
+
+**Backend `GET /items` default status changed**
+- Was: `status: Optional[ItemStatus] = ItemStatus.open` (hid resolved items by default)
+- Now: `status: Optional[ItemStatus] = None` (shows all items when no status param sent)
+- Frontend controls what it shows by always sending explicit params
+
+**Breadcrumb on item detail**
+- `item.js renderItem()` fills `#breadcrumb` with `Home › Lost/Found Items › Item Title`
+- Each crumb is a clickable link back to that filtered section
+- Back button styled as `.btn-back` (pill with border) instead of plain text link
+
 ## Key data notes
 - `Item.date_occurred` is stored as a plain `String` (`YYYY-MM-DD`), not a `Date` column
 - `Item.category` is a free-form string — no enum enforcement at DB level
