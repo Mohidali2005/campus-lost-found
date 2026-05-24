@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — LUMS Lost &amp; Found</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* ── Dashboard-specific styles ───────────────────────────────────── */
+
+        /* Stats bar at the top: shows "X items posted · Y AI matches" */
+        .dashboard-stats {
+            display: flex;
+            gap: 2rem;
+            margin: 1.5rem 0;
+            padding: 1rem 1.5rem;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            flex-wrap: wrap;
+        }
+
+        .stat-block {
+            text-align: center;
+        }
+
+        /* The large number in each stat block */
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);   /* LUMS green */
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+
+        /* Each of the user's own items gets a "my-item-card" wrapper */
+        .my-item-card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        /* Top row of the item card: photo + item details side by side */
+        .my-item-header {
+            display: flex;
+            gap: 1rem;
+            padding: 1.25rem;
+            align-items: flex-start;
+        }
+
+        /* Thumbnail of the item's photo (if any) */
+        .my-item-thumb {
+            width: 90px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 6px;
+            flex-shrink: 0;
+            background: #f0f0f0;
+        }
+
+        /* Placeholder shown when there is no photo */
+        .my-item-thumb-placeholder {
+            width: 90px;
+            height: 90px;
+            border-radius: 6px;
+            background: #f0f4f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            flex-shrink: 0;
+            color: #aaa;
+        }
+
+        .my-item-info { flex: 1; }
+
+        .my-item-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0 0 0.3rem;
+        }
+
+        .my-item-title a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .my-item-title a:hover { color: var(--primary); }
+
+        .my-item-meta {
+            font-size: 0.82rem;
+            color: #666;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem 1rem;
+            margin-top: 0.4rem;
+        }
+
+        /* ── Matches section inside each item card ───────────────────────── */
+
+        .matches-section {
+            border-top: 1px solid #eee;
+            padding: 1rem 1.25rem;
+        }
+
+        .matches-heading {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Green pill showing how many matches: "2 AI Matches" */
+        .match-count-badge {
+            background: var(--primary);
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.1rem 0.5rem;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+        /* Horizontal scroll row of matched item mini-cards */
+        .matches-row {
+            display: flex;
+            gap: 0.75rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        /* Each matched item is a small card in the row */
+        .match-card {
+            background: #f8faf8;
+            border: 1px solid #e0eae0;
+            border-radius: 8px;
+            padding: 0.75rem;
+            min-width: 200px;
+            max-width: 240px;
+            flex-shrink: 0;
+            font-size: 0.83rem;
+        }
+
+        .match-card a {
+            font-weight: 600;
+            color: var(--primary);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .match-card a:hover { text-decoration: underline; }
+
+        /* Similarity score shown as a percentage */
+        .match-score {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 0.4rem;
+        }
+
+        .match-score span {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* "No matches yet" message shown when CLIP found nothing */
+        .no-matches {
+            font-size: 0.82rem;
+            color: #999;
+            font-style: italic;
+        }
+
+        /* Empty state when user has posted no items at all */
+        .empty-dashboard {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #888;
+        }
+
+        .empty-dashboard h2 { color: #444; margin-bottom: 0.5rem; }
+
+        /* Status badge colours — reuse global .badge + specific colours */
+        .badge-open     { background: #e6f4ea; color: #2d7a3a; }
+        .badge-resolved { background: #fce8e6; color: #c0392b; }
+    </style>
+</head>
+<body>
+
+    <!-- ── Navigation ──────────────────────────────────────────────────────── -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="nav-brand">LUMS <span>Lost &amp; Found</span></a>
+            <div class="nav-links" id="nav-links"></div>
+        </div>
+    </nav>
+
+    <main class="page-content">
+        <div class="container">
+
+            <!-- Page heading — updated by JS once user data loads -->
+            <h1 id="dashboard-heading">My Dashboard</h1>
+
+            <!-- Alert area for errors (e.g. not logged in) -->
+            <div id="dash-alert"></div>
+
+            <!-- Stats bar: item count + match count -->
+            <div class="dashboard-stats" id="dashboard-stats" style="display:none;">
+                <div class="stat-block">
+                    <div class="stat-number" id="stat-items">0</div>
+                    <div class="stat-label">Items Posted</div>
+                </div>
+                <div class="stat-block">
+                    <div class="stat-number" id="stat-matches">0</div>
+                    <div class="stat-label">AI Matches Found</div>
+                </div>
+            </div>
+
+            <!-- Loading spinner shown while the API call is in flight -->
+            <div id="dash-spinner" class="spinner"></div>
+
+            <!-- Items list — filled by JS below -->
+            <div id="items-list"></div>
+
+        </div>
+    </main>
+
+    <!-- Load shared utilities first, then page logic inline below -->
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+    // ── Dashboard page logic ──────────────────────────────────────────────────
+    //
+    // Flow:
+    //   1. Check if the user is logged in — redirect to login.html if not
+    //   2. Call GET /dashboard to get the user's items + AI matches
+    //   3. Render the stats bar
+    //   4. Render each item card with its matches underneath
+    // ─────────────────────────────────────────────────────────────────────────
+
+    document.addEventListener("DOMContentLoaded", async () => {
+
+        // ── Step 1: Populate the nav bar ──────────────────────────────────────
+        await updateNav();
+
+        // ── Step 2: Redirect guests to login ──────────────────────────────────
+        // The dashboard only makes sense for registered users who have posted items.
+        // If there's no token at all, send them to the login page immediately.
+        if (!isLoggedIn()) {
+            window.location.href = "login.html";
+            return;
+        }
+
+        // ── Step 3: Fetch dashboard data from the backend ────────────────────
+        // GET /dashboard — protected endpoint, automatically sends the JWT
+        // from localStorage via apiGet's authHeader() call.
+        try {
+            const data = await apiGet("/dashboard");
+
+            // Hide the loading spinner now that data has arrived
+            document.getElementById("dash-spinner").style.display = "none";
+
+            // ── Step 4: Update the page heading with the user's name ──────────
+            const firstName = escapeHtml(data.user.name.split(" ")[0]);
+            document.getElementById("dashboard-heading").textContent =
+                `${data.user.name}'s Dashboard`;
+
+            // ── Step 5: Show the stats bar ────────────────────────────────────
+            document.getElementById("stat-items").textContent   = data.total_items;
+            document.getElementById("stat-matches").textContent = data.total_matches;
+            document.getElementById("dashboard-stats").style.display = "flex";
+
+            // ── Step 6: Render the items list ─────────────────────────────────
+            const listEl = document.getElementById("items-list");
+
+            if (data.items.length === 0) {
+                // User hasn't posted anything yet
+                listEl.innerHTML = `
+                    <div class="empty-dashboard">
+                        <h2>No items yet</h2>
+                        <p>You haven't posted any lost or found items.</p>
+                        <a href="post.html" class="btn btn-primary" style="margin-top:1rem;">
+                            + Post Your First Item
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            // Render one card per item
+            listEl.innerHTML = data.items.map(renderItemCard).join("");
+
+        } catch (err) {
+            // Hide spinner and show error (e.g. 401 if token expired)
+            document.getElementById("dash-spinner").style.display = "none";
+            showAlert("dash-alert", err.message || "Failed to load dashboard.");
+        }
+    });
+
+
+    // ── renderItemCard ────────────────────────────────────────────────────────
+    //
+    // Builds the HTML string for one item card including its matches section.
+    // Receives one element from data.items — a DashboardItemOut object:
+    //   { item: ItemOut, matches: MatchOut[] }
+
+    function renderItemCard({ item, matches }) {
+        // ── Photo or placeholder icon ──────────────────────────────────────────
+        // If the item has a photo we show a thumbnail, otherwise a generic icon.
+        const photoHtml = item.image_path
+            ? `<img
+                   src="http://127.0.0.1:8000${escapeHtml(item.image_path)}"
+                   alt="Photo of ${escapeHtml(item.title)}"
+                   class="my-item-thumb"
+               >`
+            : `<div class="my-item-thumb-placeholder">
+                   ${item.type === "lost" ? "🔍" : "📦"}
+               </div>`;
+
+        // ── Type and status badges ─────────────────────────────────────────────
+        // type badge: green for "found", red for "lost"
+        const typeBadgeClass  = item.type === "lost" ? "badge-lost" : "badge-found";
+        const statusBadgeClass = item.status === "open" ? "badge-open" : "badge-resolved";
+
+        // ── Matches section ───────────────────────────────────────────────────
+        // If CLIP found matches, render a horizontal scroll row of mini-cards.
+        // If not, show a "no matches yet" message.
+        const matchesHtml = matches.length > 0
+            ? `<div class="matches-row">
+                   ${matches.map(renderMatchCard).join("")}
+               </div>`
+            : `<p class="no-matches">
+                   No AI matches yet — matches appear when similar items are posted.
+               </p>`;
+
+        // ── Assemble the full card ────────────────────────────────────────────
+        return `
+            <div class="my-item-card">
+
+                <!-- Item header: photo + details -->
+                <div class="my-item-header">
+                    ${photoHtml}
+                    <div class="my-item-info">
+                        <p class="my-item-title">
+                            <a href="item.html?id=${item.id}">${escapeHtml(item.title)}</a>
+                        </p>
+
+                        <!-- Type and status badges side by side -->
+                        <div style="display:flex; gap:0.4rem; margin-bottom:0.4rem; flex-wrap:wrap;">
+                            <span class="badge ${typeBadgeClass}">
+                                ${item.type === "lost" ? "Lost" : "Found"}
+                            </span>
+                            <span class="badge ${statusBadgeClass}">
+                                ${item.status === "open" ? "Open" : "Resolved"}
+                            </span>
+                        </div>
+
+                        <!-- Category, location, date posted -->
+                        <div class="my-item-meta">
+                            <span>📁 ${escapeHtml(item.category)}</span>
+                            <span>📍 ${escapeHtml(item.location)}</span>
+                            <span>📅 ${formatDate(item.date_occurred)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Matches section below the item details -->
+                <div class="matches-section">
+                    <div class="matches-heading">
+                        Possible AI Matches
+                        ${matches.length > 0
+                            ? `<span class="match-count-badge">${matches.length}</span>`
+                            : ""}
+                    </div>
+                    ${matchesHtml}
+                </div>
+
+            </div>
+        `;
+    }
+
+
+    // ── renderMatchCard ───────────────────────────────────────────────────────
+    //
+    // Builds a small match mini-card for one MatchOut object.
+    // matched_item is the OTHER item in the pair — the one we're suggesting.
+
+    function renderMatchCard(match) {
+        const other = match.matched_item;
+
+        // Convert 0.8731 → "87%" for a human-readable similarity score
+        const pct = Math.round(match.similarity_score * 100);
+
+        // Type label of the matched item
+        const typeLabel = other.type === "lost" ? "Lost" : "Found";
+        const typeBadge = other.type === "lost" ? "badge-lost" : "badge-found";
+
+        return `
+            <div class="match-card">
+                <!-- Link to the matched item's detail page -->
+                <a href="item.html?id=${other.id}">${escapeHtml(other.title)}</a>
+
+                <!-- Category and location of the matched item -->
+                <div style="color:#555; font-size:0.78rem; margin-bottom:0.3rem;">
+                    ${escapeHtml(other.category)} &middot; ${escapeHtml(other.location)}
+                </div>
+
+                <!-- Type badge -->
+                <span class="badge ${typeBadge}" style="font-size:0.7rem;">${typeLabel}</span>
+
+                <!-- Similarity score -->
+                <div class="match-score">
+                    AI similarity: <span>${pct}%</span>
+                </div>
+            </div>
+        `;
+    }
+    </script>
+</body>
+</html>

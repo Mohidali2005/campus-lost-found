@@ -107,3 +107,33 @@ class MatchOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ── Dashboard (Phase 8) ───────────────────────────────────────────────────────
+
+class DashboardItemOut(BaseModel):
+    """
+    One of the logged-in user's own items bundled with its AI matches.
+
+    This is a nested structure:
+      item    → the user's posting (full ItemOut)
+      matches → list of MatchOut, each containing the matched opposite-type item
+
+    For example: a lost laptop the user posted, plus any found laptops
+    that CLIP thinks are similar.
+    """
+    item: ItemOut
+    matches: list[MatchOut]  # sorted by similarity_score descending
+
+
+class DashboardOut(BaseModel):
+    """
+    Full response for GET /dashboard.
+
+    Contains the logged-in user's profile, all their items (each with
+    AI matches), and summary counts for the UI header.
+    """
+    user: UserOut
+    items: list[DashboardItemOut]  # all user's items, newest first
+    total_items: int               # total items the user has posted
+    total_matches: int             # total AI matches found across all their items

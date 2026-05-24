@@ -23,6 +23,7 @@ from backend.config import settings
 from backend.routers.auth import router as auth_router
 from backend.routers.items import router as items_router
 from backend.routers.messages import router as messages_router
+from backend.routers.dashboard import router as dashboard_router  # Phase 8
 
 
 # ── Lifespan: startup/shutdown logic ─────────────────────────────────────────
@@ -86,9 +87,10 @@ app.mount("/uploads", StaticFiles(directory=settings.upload_dir), name="uploads"
 # Each phase adds its router here via app.include_router(...)
 # The router's own `prefix` setting (e.g. "/auth") determines the URL path.
 
-app.include_router(auth_router)     # Phase 2: /auth/register, /auth/login, /auth/me
-app.include_router(items_router)    # Phase 3+4: POST /items, GET /items, GET /items/{id}
-app.include_router(messages_router) # Phase 5: POST+GET /items/{id}/messages
+app.include_router(auth_router)      # Phase 2: /auth/register, /auth/login, /auth/me
+app.include_router(items_router)     # Phase 3+4+7: POST /items, GET /items, GET /items/{id}, GET /items/{id}/matches
+app.include_router(messages_router)  # Phase 5: POST+GET /items/{id}/messages
+app.include_router(dashboard_router) # Phase 8: GET /dashboard
 
 
 # ── Health check ──────────────────────────────────────────────────────────────

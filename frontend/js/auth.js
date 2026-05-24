@@ -64,8 +64,11 @@ async function updateNav() {
         // Extract just the first name so the nav doesn't overflow
         const firstName = escapeHtml(user.name.split(" ")[0]);
 
+        // Logged-in nav: Post Item | Dashboard | Hello, Name | Logout
+        // Dashboard link is only shown to registered users — guests have no dashboard
         navLinks.innerHTML = `
             <a href="post.html" class="btn-nav btn">+ Post Item</a>
+            <a href="dashboard.html" style="color:rgba(255,255,255,0.9); font-size:0.9rem;">Dashboard</a>
             <span style="color:rgba(255,255,255,0.8); font-size:0.9rem;">
                 Hello, ${firstName}
             </span>

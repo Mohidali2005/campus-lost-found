@@ -59,7 +59,7 @@ Uploaded photos are saved to `backend/uploads/` and served by FastAPI's `StaticF
 | 5 | Public message threads (backend) | ✅ Done |
 | 6 | Full frontend — HTML/CSS/JS | ✅ Done |
 | 7 | CLIP image matching (backend) | ✅ Done |
-| 8 | Registered user dashboard (backend + frontend) | ⬜ |
+| 8 | Registered user dashboard (backend + frontend) | ✅ Done |
 | 9 | Polish & admin panel | ⬜ |
 
 Work one phase at a time. After each phase:
@@ -157,10 +157,23 @@ Key decisions:
 - Non-fatal: any CLIP error is logged as a warning; the item post always succeeds
 - Cosine similarity via dot product of L2-normalised vectors (no numpy needed for 512-dim)
 
-### Phase 8 — Registered user dashboard (backend + frontend)
-Plan:
-- Backend: `GET /dashboard` — returns logged-in user's items + AI matches for each
-- Frontend: `frontend/dashboard.html` — shows user's postings and match alerts
+### Phase 8 — Registered user dashboard (backend + frontend) ← most recently completed
+Files created:
+- `backend/routers/dashboard.py`: `GET /dashboard` (protected — 401 for guests)
+  - Fetches all items posted by the logged-in user (newest first)
+  - For each item, fetches pre-computed CLIP matches from the matches table
+  - Returns `DashboardOut` { user, items: DashboardItemOut[], total_items, total_matches }
+- `frontend/dashboard.html`: dashboard page
+  - Redirects to login.html if not logged in
+  - Stats bar: items posted + AI matches found
+  - One card per item: photo thumbnail, type/status badges, category/location/date
+  - Each card has a "Possible AI Matches" section with a horizontal scroll row of match mini-cards
+  - Match mini-cards show title, category, location, type badge, and similarity % score
+
+Changes to existing files:
+- `backend/schemas.py`: added `DashboardItemOut` (item + matches) and `DashboardOut` (user + items + counts)
+- `backend/main.py`: wired in `dashboard_router` at `/dashboard`
+- `frontend/js/auth.js`: added "Dashboard" link in nav for logged-in users
 
 ### Phase 9 — Polish & admin panel
 Plan:
