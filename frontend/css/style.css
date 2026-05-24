@@ -484,6 +484,18 @@ img {
 .mt-3 { margin-top: 1.5rem; }
 .hidden { display: none !important; }  /* !important so JS .classList.add("hidden") always wins */
 
+/* ── Resolved card visual treatment ─────────────────────────────────────────── */
+
+/* Resolved cards are slightly dimmed so open items catch the eye first */
+.card-resolved {
+    opacity: 0.72;
+}
+/* Greyscale the photo slightly to reinforce "closed" state */
+.card-resolved .card-img,
+.card-resolved .card-no-img {
+    filter: grayscale(25%);
+}
+
 /* ── Sidebar ────────────────────────────────────────────────────────────────── */
 
 /* Fixed left panel — sits below the navbar, full viewport height */

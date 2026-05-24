@@ -61,27 +61,55 @@ async function loadItems() {
 // ── renderItems ───────────────────────────────────────────────────────────────
 
 // Renders the array of item objects as a grid of cards.
+// Also updates the page heading and subtitle to match the active type filter.
 function renderItems(items, total) {
     const container = document.getElementById("items-container");
 
-    // Update the small "X items found" text above the grid
+    // ── Update page heading based on the active type filter ───────────────────
+    // Reads the current value of the type dropdown (set from URL params on load
+    // or changed by the user) and changes the h1 + subtitle to match.
+    const typeFilter = document.getElementById("filter-type").value;
+    const headingEl  = document.getElementById("page-heading");
+    const subtitleEl = document.getElementById("page-subtitle");
+
+    if (headingEl) {
+        if (typeFilter === "lost") {
+            headingEl.textContent  = "Lost Items";
+            if (subtitleEl) subtitleEl.textContent = "Items that students on LUMS campus are still looking for.";
+        } else if (typeFilter === "found") {
+            headingEl.textContent  = "Found Items";
+            if (subtitleEl) subtitleEl.textContent = "Items found on LUMS campus that need to be returned to their owner.";
+        } else {
+            headingEl.textContent  = "Lost & Found Board";
+            if (subtitleEl) subtitleEl.textContent = "Browse all lost and found items across LUMS campus.";
+        }
+    }
+
+    // ── Update the result count line ─────────────────────────────────────────
     document.getElementById("result-count").textContent =
         total === 0 ? "" : total === 1 ? "1 item found" : `${total} items found`;
 
     if (items.length === 0) {
-        // Empty state — no items matched the filters
+        // Give a helpful empty-state message that matches the active filter
+        const emptyMsg = typeFilter === "lost"
+            ? "No lost items match your search."
+            : typeFilter === "found"
+                ? "No found items yet — if you've found something on campus, post it!"
+                : "No items match your search.";
+
         container.innerHTML = `
             <div class="empty-state" style="grid-column: 1 / -1">
-                <div style="font-size:3rem; opacity:0.3; margin-bottom:1rem">?</div>
-                <h3>No items found</h3>
-                <p>Try different search terms or remove a filter</p>
+                <div style="font-size:3rem; opacity:0.3; margin-bottom:1rem">
+                    ${typeFilter === "found" ? "📦" : "🔍"}
+                </div>
+                <h3>${emptyMsg}</h3>
+                <p><a href="post.html">+ Post an item</a></p>
             </div>
         `;
         return;
     }
 
-    // Build each card's HTML and join into one string, then set innerHTML once.
-    // This is more efficient than calling appendChild() for each card separately.
+    // Build all cards at once — one innerHTML write is faster than many appends
     container.innerHTML = items.map(renderItemCard).join("");
 }
 
@@ -89,21 +117,31 @@ function renderItems(items, total) {
 // ── renderItemCard ────────────────────────────────────────────────────────────
 
 // Builds and returns the HTML string for one item card.
-// We return a string (not a DOM node) because we join all cards and set innerHTML once.
 function renderItemCard(item) {
-    // Photo section: real image if item has one, styled placeholder if not
+    // Photo: real image or a placeholder icon (🔍 for lost, 📦 for found)
     const imgSection = item.image_path
         ? `<img class="card-img"
                 src="${API_BASE}${escapeHtml(item.image_path)}"
                 alt="${escapeHtml(item.title)}"
-                loading="lazy">`    // lazy loading = only loads when card is visible
-        : `<div class="card-no-img">${item.type === "lost" ? "L" : "F"}</div>`;
+                loading="lazy">`
+        : `<div class="card-no-img">${item.type === "lost" ? "🔍" : "📦"}</div>`;
+
+    // Show a RESOLVED badge next to the type badge for closed items
+    // so users can see at a glance which items are still open
+    const resolvedBadge = item.status === "resolved"
+        ? `<span class="badge badge-resolved" style="margin-left:0.3rem;">Resolved</span>`
+        : "";
+
+    // Resolved cards get a dimmed style so open items stand out
+    const resolvedClass = item.status === "resolved" ? " card-resolved" : "";
 
     return `
-        <div class="card">
+        <div class="card${resolvedClass}">
             ${imgSection}
             <div class="card-body">
+                <!-- Type badge (LOST / FOUND) + optional Resolved badge -->
                 <span class="badge badge-${item.type}">${item.type.toUpperCase()}</span>
+                ${resolvedBadge}
                 <div class="card-title">${escapeHtml(item.title)}</div>
                 <div class="card-meta">Category: ${escapeHtml(item.category)}</div>
                 <div class="card-meta">Location: ${escapeHtml(item.location)}</div>
@@ -113,7 +151,6 @@ function renderItemCard(item) {
                 <span class="text-muted" style="font-size:0.8rem">
                     by ${escapeHtml(item.poster_name)}
                 </span>
-                <!-- Link to the item detail page, passing the id as a URL query param -->
                 <a href="item.html?id=${item.id}" class="btn btn-sm btn-outline">View</a>
             </div>
         </div>
