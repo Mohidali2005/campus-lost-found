@@ -1,0 +1,109 @@
+from datetime import datetime
+from pydantic import BaseModel, EmailStr
+from typing import Optional
+from backend.models import ItemType, ItemStatus
+
+
+# ── Auth ──────────────────────────────────────────────────────────────────────
+
+class UserRegister(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    student_id: Optional[str] = None
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+class UserOut(BaseModel):
+    id: int
+    name: str
+    email: str
+    student_id: Optional[str]
+    is_admin: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ── Items ─────────────────────────────────────────────────────────────────────
+
+class ItemCreate(BaseModel):
+    poster_name: str
+    poster_contact: str
+    type: ItemType
+    title: str
+    description: str
+    category: str
+    location: str
+    date_occurred: str
+    drop_off_location: Optional[str] = None
+
+
+class ItemOut(BaseModel):
+    id: int
+    user_id: Optional[int]
+    poster_name: str
+    poster_contact: str
+    type: ItemType
+    title: str
+    description: str
+    category: str
+    location: str
+    date_occurred: str
+    drop_off_location: Optional[str]
+    image_path: Optional[str]
+    status: ItemStatus
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ItemListOut(BaseModel):
+    items: list[ItemOut]
+    total: int
+    page: int
+    pages: int
+
+
+# ── Messages ──────────────────────────────────────────────────────────────────
+
+class MessageCreate(BaseModel):
+    sender_name: str
+    body: str
+
+
+class MessageOut(BaseModel):
+    id: int
+    item_id: int
+    user_id: Optional[int]
+    sender_name: str
+    body: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ── Matches ───────────────────────────────────────────────────────────────────
+
+class MatchOut(BaseModel):
+    id: int
+    lost_item_id: int
+    found_item_id: int
+    similarity_score: float
+    created_at: datetime
+    matched_item: ItemOut  # the "other" item in the pair
+
+    class Config:
+        from_attributes = True

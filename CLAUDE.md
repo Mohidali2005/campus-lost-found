@@ -85,7 +85,7 @@ Match    id, lost_item_id(FK), found_item_id(FK), similarity_score, created_at
 ## Build Phases & Status
 | Phase | Description | Status |
 |---|---|---|
-| 1 | Project skeleton: folder structure, DB models, server health check | ✅ Done |
+| 1 | Project skeleton: folder structure, DB models, server health check | ✅ Done — commit: "phase 1" |
 | 2 | Authentication: register, login, JWT (optional for users) | ⬜ Not started |
 | 3 | Item posting: form with photo upload, guest + registered | ⬜ Not started |
 | 4 | Browse & search: item cards, filters, item detail page | ⬜ Not started |
