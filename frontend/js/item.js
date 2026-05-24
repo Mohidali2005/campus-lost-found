@@ -54,6 +54,18 @@ function renderItem(item) {
     // Update the browser tab title to match the item
     document.title = `${item.title} — LUMS Lost & Found`;
 
+    // Update the breadcrumb trail at the top of the page with the real item title
+    const breadcrumb = document.getElementById("breadcrumb");
+    if (breadcrumb) {
+        breadcrumb.innerHTML = `
+            <a href="index.html">Home</a>
+            <span class="breadcrumb-sep">›</span>
+            <a href="index.html?type=${item.type}">${item.type === "lost" ? "Lost Items" : "Found Items"}</a>
+            <span class="breadcrumb-sep">›</span>
+            <span>${escapeHtml(item.title)}</span>
+        `;
+    }
+
     // Photo: show the real image or a styled placeholder
     const imgSection = item.image_path
         ? `<img class="item-detail-img"

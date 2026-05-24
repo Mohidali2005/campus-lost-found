@@ -92,6 +92,64 @@ async function updateNav() {
             <a href="register.html" class="btn-nav btn">Register</a>
         `;
     }
+
+    // Also fill the sidebar if this page has one
+    await updateSidebar();
+}
+
+
+// ── updateSidebar ─────────────────────────────────────────────────────────────
+
+// Fills the #sidebar-nav element with navigation links appropriate to the
+// current page and auth state.
+// Called automatically at the end of updateNav() — no need to call it manually.
+// Safe to call on pages that have no sidebar (#sidebar-nav won't exist → return early).
+async function updateSidebar() {
+    const nav = document.getElementById("sidebar-nav");
+    if (!nav) return;  // page has no sidebar — nothing to do
+
+    // getCurrentUser() is cached so this won't fire a second network request
+    const user = await getCurrentUser();
+
+    // Work out which page and filter are active so we can highlight the right link
+    const page       = window.location.pathname.split("/").pop() || "index.html";
+    const typeFilter = new URLSearchParams(window.location.search).get("type");
+
+    // Returns the class string for a sidebar link — adds "active" when this link
+    // matches the current page + (optionally) the query-string filter
+    function linkClass(href) {
+        let isActive = false;
+        if (href === "index.html?type=lost")  isActive = page === "index.html" && typeFilter === "lost";
+        else if (href === "index.html?type=found") isActive = page === "index.html" && typeFilter === "found";
+        else if (href === "index.html")        isActive = page === "index.html" && !typeFilter;
+        else                                   isActive = page === href;
+        return isActive ? "sidebar-link active" : "sidebar-link";
+    }
+
+    // Auth-specific section: show account links or login/register
+    const accountSection = user ? `
+        <hr class="sidebar-divider">
+        <div class="sidebar-section-label">My Account</div>
+        <a href="dashboard.html" class="${linkClass("dashboard.html")}">📊 My Dashboard</a>
+        ${user.is_admin ? `<a href="admin.html" class="${linkClass("admin.html")}">🛡️ Admin Panel</a>` : ""}
+        <hr class="sidebar-divider">
+        <a href="#" class="sidebar-link" onclick="logout();return false;">🚪 Logout</a>
+    ` : `
+        <hr class="sidebar-divider">
+        <div class="sidebar-section-label">Account</div>
+        <a href="login.html"    class="${linkClass("login.html")}">🔑 Login</a>
+        <a href="register.html" class="${linkClass("register.html")}">📝 Register</a>
+    `;
+
+    nav.innerHTML = `
+        <div class="sidebar-section-label">Browse</div>
+        <a href="index.html"           class="${linkClass("index.html")}">🏠 All Items</a>
+        <a href="index.html?type=lost"  class="${linkClass("index.html?type=lost")}">🔍 Lost Items</a>
+        <a href="index.html?type=found" class="${linkClass("index.html?type=found")}">📦 Found Items</a>
+        <hr class="sidebar-divider">
+        <a href="post.html" class="${linkClass("post.html")}">➕ Post an Item</a>
+        ${accountSection}
+    `;
 }
 
 

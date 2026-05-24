@@ -6,18 +6,23 @@
     <title>LUMS Lost &amp; Found</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body class="has-sidebar">
 
     <!-- ── Navigation bar ──────────────────────────────────────────────────── -->
-    <!-- The nav-links div is filled by auth.js updateNav() on page load       -->
     <nav class="navbar">
         <div class="container">
+            <!-- Hamburger button: only visible on mobile, toggles the sidebar -->
+            <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Open menu">&#9776;</button>
             <a href="index.html" class="nav-brand">LUMS <span>Lost &amp; Found</span></a>
-            <div class="nav-links" id="nav-links">
-                <!-- Populated by updateNav() in auth.js -->
-            </div>
+            <div class="nav-links" id="nav-links"></div>
         </div>
     </nav>
+
+    <!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
+    <!-- Filled by updateSidebar() in auth.js, called from updateNav()         -->
+    <aside class="sidebar" id="sidebar">
+        <nav id="sidebar-nav"></nav>
+    </aside>
 
     <!-- ── Main content ────────────────────────────────────────────────────── -->
     <main class="page-content">
@@ -87,5 +92,20 @@
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
+    <script>
+        // Toggle sidebar open/closed on mobile (class on body triggers the CSS)
+        function toggleSidebar() {
+            document.body.classList.toggle("sidebar-open");
+        }
+        // Clicking the dim overlay (the ::after pseudo-element) closes the sidebar
+        document.addEventListener("click", function(e) {
+            if (document.body.classList.contains("sidebar-open")) {
+                const sidebar = document.getElementById("sidebar");
+                if (!sidebar.contains(e.target) && !e.target.closest(".sidebar-toggle")) {
+                    document.body.classList.remove("sidebar-open");
+                }
+            }
+        });
+    </script>
 </body>
 </html>

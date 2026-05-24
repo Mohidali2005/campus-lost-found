@@ -193,15 +193,20 @@
         .badge-resolved { background: #fce8e6; color: #c0392b; }
     </style>
 </head>
-<body>
+<body class="has-sidebar">
 
     <!-- ── Navigation ──────────────────────────────────────────────────────── -->
     <nav class="navbar">
         <div class="container">
+            <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Open menu">&#9776;</button>
             <a href="index.html" class="nav-brand">LUMS <span>Lost &amp; Found</span></a>
             <div class="nav-links" id="nav-links"></div>
         </div>
     </nav>
+
+    <aside class="sidebar" id="sidebar">
+        <nav id="sidebar-nav"></nav>
+    </aside>
 
     <main class="page-content">
         <div class="container">
@@ -423,6 +428,17 @@
             </div>
         `;
     }
+    </script>
+    <script>
+        function toggleSidebar() { document.body.classList.toggle("sidebar-open"); }
+        document.addEventListener("click", function(e) {
+            if (document.body.classList.contains("sidebar-open")) {
+                const sidebar = document.getElementById("sidebar");
+                if (!sidebar.contains(e.target) && !e.target.closest(".sidebar-toggle")) {
+                    document.body.classList.remove("sidebar-open");
+                }
+            }
+        });
     </script>
 </body>
 </html>

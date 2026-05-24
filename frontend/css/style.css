@@ -484,6 +484,130 @@ img {
 .mt-3 { margin-top: 1.5rem; }
 .hidden { display: none !important; }  /* !important so JS .classList.add("hidden") always wins */
 
+/* ── Sidebar ────────────────────────────────────────────────────────────────── */
+
+/* Fixed left panel — sits below the navbar, full viewport height */
+.sidebar {
+    position: fixed;
+    top: var(--nav-height);
+    left: 0;
+    width: 210px;
+    height: calc(100vh - var(--nav-height));
+    background: var(--card-bg);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 50;
+    padding: 0.75rem 0;
+}
+
+/* Small uppercase section heading inside sidebar (e.g. "Browse", "Account") */
+.sidebar-section-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    padding: 0.75rem 1rem 0.25rem;
+}
+
+/* Each navigation link in the sidebar */
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.45rem 1rem;
+    color: var(--text);
+    font-size: 0.88rem;
+    transition: background 0.15s, color 0.15s;
+    border-left: 3px solid transparent;  /* space reserved for the active indicator */
+    text-decoration: none;
+}
+.sidebar-link:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+    text-decoration: none;
+}
+
+/* Active page link — green left border + green text + tinted background */
+.sidebar-link.active {
+    background: var(--primary-light);
+    color: var(--primary);
+    border-left-color: var(--primary);
+    font-weight: 600;
+}
+
+/* Thin horizontal rule between sidebar sections */
+.sidebar-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0.4rem 0;
+}
+
+/* When a page has a sidebar, push the main content to the right */
+.has-sidebar .page-content {
+    margin-left: 210px;
+}
+
+/* Hamburger button shown only on mobile — toggles the sidebar overlay */
+.sidebar-toggle {
+    display: none;             /* hidden on desktop */
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.4rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    margin-right: 0.5rem;
+    line-height: 1;
+}
+
+/* ── Breadcrumb ──────────────────────────────────────────────────────────────── */
+
+/* Navigation trail shown below the navbar on detail pages */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.83rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+.breadcrumb a {
+    color: var(--primary);
+}
+.breadcrumb a:hover { text-decoration: underline; }
+
+/* The › separator between crumbs */
+.breadcrumb-sep {
+    color: var(--border);
+    font-size: 1rem;
+    line-height: 1;
+}
+
+/* ── Back button ─────────────────────────────────────────────────────────────── */
+
+/* More visible alternative to a plain text link */
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: white;
+    color: var(--text);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    transition: background 0.15s, border-color 0.15s;
+}
+.btn-back:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+    text-decoration: none;
+}
+
 /* ── Responsive ────────────────────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
@@ -494,6 +618,32 @@ img {
     .search-bar { flex-direction: column; }
     .search-bar input, .search-bar select { min-width: 100%; }
 
-    /* Hide secondary nav links on mobile to save space */
+    /* Hide secondary nav links on mobile to save space (sidebar covers those) */
     .nav-links a:not(.btn-nav) { display: none; }
+
+    /* On mobile the sidebar is hidden by default */
+    .sidebar {
+        display: none;
+        width: 240px;
+        z-index: 200;
+        box-shadow: 4px 0 16px rgba(0,0,0,0.12);
+    }
+
+    /* When body has sidebar-open class the sidebar slides in as an overlay */
+    body.sidebar-open .sidebar { display: block; }
+
+    /* Dim overlay behind the open sidebar */
+    body.sidebar-open::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.35);
+        z-index: 150;
+    }
+
+    /* Remove the content margin on mobile — sidebar is an overlay, not inline */
+    .has-sidebar .page-content { margin-left: 0; }
+
+    /* Show the hamburger button on mobile */
+    .sidebar-toggle { display: flex; align-items: center; }
 }
