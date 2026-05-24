@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel — LUMS Lost &amp; Found</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* ── Admin panel styles ──────────────────────────────────────────── */
+
+        /* Tab buttons to switch between Users and Items views */
+        .admin-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1.5rem 0 1rem;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 0;
+        }
+
+        .tab-btn {
+            padding: 0.5rem 1.25rem;
+            border: none;
+            background: none;
+            font-size: 0.95rem;
+            cursor: pointer;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            font-weight: 500;
+        }
+
+        /* Active tab gets the LUMS green underline */
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Each tab's content panel */
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* Responsive data tables */
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+
+        .admin-table th {
+            background: var(--primary);
+            color: white;
+            padding: 0.65rem 0.9rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .admin-table td {
+            padding: 0.6rem 0.9rem;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        /* Zebra striping for readability */
+        .admin-table tr:nth-child(even) td { background: #fafafa; }
+        .admin-table tr:hover td { background: #f0f7f0; }
+
+        /* Small red delete button used in each table row */
+        .btn-delete {
+            background: #c0392b;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.65rem;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            cursor: pointer;
+        }
+
+        .btn-delete:hover { background: #a93226; }
+
+        /* Stats row at the top */
+        .admin-stats {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .admin-stat {
+            background: #fff;
+            border-radius: 8px;
+            padding: 0.75rem 1.25rem;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            text-align: center;
+            min-width: 110px;
+        }
+
+        .admin-stat-num {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .admin-stat-label {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 0.2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="nav-brand">LUMS <span>Lost &amp; Found</span></a>
+            <div class="nav-links" id="nav-links"></div>
+        </div>
+    </nav>
+
+    <main class="page-content">
+        <div class="container">
+
+            <h1>Admin Panel</h1>
+
+            <!-- Alert for errors (e.g. not admin) -->
+            <div id="admin-alert"></div>
+
+            <!-- Loading spinner -->
+            <div id="admin-spinner" class="spinner"></div>
+
+            <!-- Stats row — filled by JS -->
+            <div class="admin-stats" id="admin-stats" style="display:none;">
+                <div class="admin-stat">
+                    <div class="admin-stat-num" id="stat-users">—</div>
+                    <div class="admin-stat-label">Users</div>
+                </div>
+                <div class="admin-stat">
+                    <div class="admin-stat-num" id="stat-items">—</div>
+                    <div class="admin-stat-label">Total Items</div>
+                </div>
+                <div class="admin-stat">
+                    <div class="admin-stat-num" id="stat-open">—</div>
+                    <div class="admin-stat-label">Open</div>
+                </div>
+                <div class="admin-stat">
+                    <div class="admin-stat-num" id="stat-resolved">—</div>
+                    <div class="admin-stat-label">Resolved</div>
+                </div>
+            </div>
+
+            <!-- Tab buttons -->
+            <div class="admin-tabs" id="admin-tabs" style="display:none;">
+                <button class="tab-btn active" onclick="showTab('users')">Users</button>
+                <button class="tab-btn"        onclick="showTab('items')">All Items</button>
+            </div>
+
+            <!-- Users tab -->
+            <div class="tab-panel active" id="tab-users">
+                <table class="admin-table" id="users-table" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Student ID</th>
+                            <th>Admin?</th>
+                            <th>Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-body"></tbody>
+                </table>
+            </div>
+
+            <!-- Items tab -->
+            <div class="tab-panel" id="tab-items">
+                <table class="admin-table" id="items-table" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Type</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Posted by</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="items-body"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+    // ── Admin panel logic ─────────────────────────────────────────────────────
+    //
+    // Loads users and items from the admin API endpoints and renders them
+    // in two switchable tab panels.
+    // Redirects to index.html if the user is not logged in or not an admin.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Store loaded data so switching tabs doesn't re-fetch
+    let _users = [];
+    let _items = [];
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        await updateNav();
+
+        // Redirect guests immediately
+        if (!isLoggedIn()) {
+            window.location.href = "login.html";
+            return;
+        }
+
+        // Verify admin status before loading data
+        const user = await getCurrentUser();
+        if (!user || !user.is_admin) {
+            document.getElementById("admin-spinner").style.display = "none";
+            showAlert("admin-alert", "Access denied. Admin accounts only.");
+            return;
+        }
+
+        // Load users and items in parallel — both requests fire at the same time
+        try {
+            [_users, _itemsPage] = await Promise.all([
+                apiGet("/admin/users"),
+                apiGet("/admin/items?page_size=100"),
+            ]);
+            _items = _itemsPage.items;
+
+            document.getElementById("admin-spinner").style.display = "none";
+
+            // Fill stats bar
+            const openCount     = _items.filter(i => i.status === "open").length;
+            const resolvedCount = _items.filter(i => i.status === "resolved").length;
+            document.getElementById("stat-users").textContent    = _users.length;
+            document.getElementById("stat-items").textContent    = _items.length;
+            document.getElementById("stat-open").textContent     = openCount;
+            document.getElementById("stat-resolved").textContent = resolvedCount;
+            document.getElementById("admin-stats").style.display = "flex";
+            document.getElementById("admin-tabs").style.display  = "flex";
+
+            // Render both tables
+            renderUsers();
+            renderItems();
+
+        } catch (err) {
+            document.getElementById("admin-spinner").style.display = "none";
+            showAlert("admin-alert", err.message || "Failed to load admin data.");
+        }
+    });
+
+
+    // ── Tab switching ─────────────────────────────────────────────────────────
+
+    function showTab(name) {
+        // Toggle active class on tab buttons
+        document.querySelectorAll(".tab-btn").forEach((btn, i) => {
+            btn.classList.toggle("active", (i === 0 && name === "users") || (i === 1 && name === "items"));
+        });
+        // Toggle active class on panels
+        document.getElementById("tab-users").classList.toggle("active", name === "users");
+        document.getElementById("tab-items").classList.toggle("active", name === "items");
+    }
+
+
+    // ── renderUsers ───────────────────────────────────────────────────────────
+
+    function renderUsers() {
+        const tbody = document.getElementById("users-body");
+        const table = document.getElementById("users-table");
+
+        if (_users.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#888;">No users found.</td></tr>`;
+        } else {
+            tbody.innerHTML = _users.map(u => `
+                <tr>
+                    <td>${u.id}</td>
+                    <td>${escapeHtml(u.name)}</td>
+                    <td>${escapeHtml(u.email)}</td>
+                    <td>${escapeHtml(u.student_id || "—")}</td>
+                    <td>${u.is_admin ? "✅ Yes" : "No"}</td>
+                    <td>${formatDate(u.created_at)}</td>
+                </tr>
+            `).join("");
+        }
+
+        table.style.display = "table";
+    }
+
+
+    // ── renderItems ───────────────────────────────────────────────────────────
+
+    function renderItems() {
+        const tbody = document.getElementById("items-body");
+        const table = document.getElementById("items-table");
+
+        if (_items.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#888;">No items found.</td></tr>`;
+        } else {
+            tbody.innerHTML = _items.map(item => `
+                <tr id="item-row-${item.id}">
+                    <td>${item.id}</td>
+                    <td>
+                        <a href="item.html?id=${item.id}" target="_blank">
+                            ${escapeHtml(item.title)}
+                        </a>
+                    </td>
+                    <td>
+                        <span class="badge badge-${item.type}" style="font-size:0.72rem;">
+                            ${item.type}
+                        </span>
+                    </td>
+                    <td>${escapeHtml(item.category)}</td>
+                    <td>
+                        <span class="badge badge-${item.status}" style="font-size:0.72rem;">
+                            ${item.status}
+                        </span>
+                    </td>
+                    <td>${escapeHtml(item.poster_name)}</td>
+                    <td>${formatDate(item.created_at)}</td>
+                    <td>
+                        <button class="btn-delete" onclick="adminDeleteItem(${item.id})">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        table.style.display = "table";
+    }
+
+
+    // ── adminDeleteItem ───────────────────────────────────────────────────────
+
+    // Called when admin clicks Delete on any item row.
+    // Sends DELETE /items/{id} and removes the row from the table on success.
+    async function adminDeleteItem(itemId) {
+        if (!confirm(`Delete item #${itemId}? This cannot be undone.`)) return;
+
+        try {
+            // DELETE /items/{id} — requires admin JWT, returns 204
+            await apiRequest("DELETE", `/items/${itemId}`);
+
+            // Remove the row from the table without a full reload
+            const row = document.getElementById(`item-row-${itemId}`);
+            if (row) row.remove();
+
+            // Update the items count stat
+            _items = _items.filter(i => i.id !== itemId);
+            document.getElementById("stat-items").textContent = _items.length;
+
+        } catch (err) {
+            showAlert("admin-alert", `Failed to delete item #${itemId}: ${err.message}`);
+        }
+    }
+    </script>
+</body>
+</html>

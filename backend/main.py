@@ -24,6 +24,7 @@ from backend.routers.auth import router as auth_router
 from backend.routers.items import router as items_router
 from backend.routers.messages import router as messages_router
 from backend.routers.dashboard import router as dashboard_router  # Phase 8
+from backend.routers.admin import router as admin_router          # Phase 9
 
 
 # ── Lifespan: startup/shutdown logic ─────────────────────────────────────────
@@ -91,6 +92,7 @@ app.include_router(auth_router)      # Phase 2: /auth/register, /auth/login, /au
 app.include_router(items_router)     # Phase 3+4+7: POST /items, GET /items, GET /items/{id}, GET /items/{id}/matches
 app.include_router(messages_router)  # Phase 5: POST+GET /items/{id}/messages
 app.include_router(dashboard_router) # Phase 8: GET /dashboard
+app.include_router(admin_router)     # Phase 9: GET /admin/users, GET /admin/items
 
 
 # ── Health check ──────────────────────────────────────────────────────────────

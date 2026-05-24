@@ -60,7 +60,7 @@ Uploaded photos are saved to `backend/uploads/` and served by FastAPI's `StaticF
 | 6 | Full frontend — HTML/CSS/JS | ✅ Done |
 | 7 | CLIP image matching (backend) | ✅ Done |
 | 8 | Registered user dashboard (backend + frontend) | ✅ Done |
-| 9 | Polish & admin panel | ⬜ |
+| 9 | Polish & admin panel | ✅ Done |
 
 Work one phase at a time. After each phase:
 1. Update the status table above to ✅ Done
@@ -175,12 +175,25 @@ Changes to existing files:
 - `backend/main.py`: wired in `dashboard_router` at `/dashboard`
 - `frontend/js/auth.js`: added "Dashboard" link in nav for logged-in users
 
-### Phase 9 — Polish & admin panel
-Plan:
-- Admin-only routes: delete any item, mark resolved, list all users
-- `DELETE /items/{id}` — owner or admin only
-- `PATCH /items/{id}/resolve` — mark an item as resolved
-- Frontend: admin panel page, loading spinners, empty states, better error messages
+### Phase 9 — Polish & admin panel ← most recently completed
+Files created:
+- `backend/routers/admin.py`: admin-only endpoints (403 for non-admins)
+  - `GET /admin/users` — list all registered users, newest first
+  - `GET /admin/items` — list all items with no status filter (shows resolved too), paginated
+- `frontend/admin.html`: admin panel with two tab panels
+  - Stats bar: total users, total items, open count, resolved count
+  - Users tab: table of all accounts (name, email, student_id, is_admin, joined)
+  - Items tab: table of all items with inline Delete button per row
+
+Changes to existing files:
+- `backend/dependencies.py`: added `get_admin_user` — checks valid JWT AND `is_admin=True` (raises 403 if not)
+- `backend/routers/items.py`: added two Phase 9 endpoints
+  - `DELETE /items/{id}` — owner or admin; deletes matches manually (no cascade), messages cascade automatically; returns 204
+  - `PATCH /items/{id}/resolve` — owner or admin; sets status=resolved; returns updated ItemOut
+- `backend/main.py`: wired `admin_router`
+- `frontend/js/api.js`: added `apiRequest(method, path, data)` — generic DELETE/PATCH helper; returns null for 204 responses
+- `frontend/js/auth.js`: added Admin nav link (visible only when `user.is_admin=true`)
+- `frontend/js/item.js`: added `addOwnerActions(item)` — injects Delete + Resolve buttons on item detail page for owners and admins
 
 ## Key data notes
 - `Item.date_occurred` is stored as a plain `String` (`YYYY-MM-DD`), not a `Date` column

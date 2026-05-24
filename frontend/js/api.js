@@ -99,6 +99,32 @@ async function apiPost(path, data) {
 }
 
 
+// ── Generic request (DELETE, PATCH, etc.) ────────────────────────────────────
+
+// Sends a request with any HTTP method. Used for DELETE and PATCH endpoints.
+// Returns the parsed JSON body, or null for 204 No Content responses.
+//
+// Usage:
+//   await apiRequest("DELETE", "/items/42");
+//   await apiRequest("PATCH",  "/items/42/resolve");
+async function apiRequest(method, path, data = null) {
+    const options = {
+        method,
+        headers: { ...authHeader() },
+    };
+    // Only attach a JSON body if data was provided (DELETE usually has no body)
+    if (data !== null) {
+        options.headers["Content-Type"] = "application/json";
+        options.body = JSON.stringify(data);
+    }
+    const response = await fetch(`${API_BASE}${path}`, options);
+    if (!response.ok) await handleError(response);
+    // 204 No Content has no body — return null instead of calling .json()
+    if (response.status === 204) return null;
+    return response.json();
+}
+
+
 // ── POST multipart form ───────────────────────────────────────────────────────
 
 // Makes a POST request with a FormData body. Used for posting items with photos.

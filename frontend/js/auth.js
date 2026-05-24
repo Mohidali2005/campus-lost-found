@@ -66,9 +66,15 @@ async function updateNav() {
 
         // Logged-in nav: Post Item | Dashboard | Hello, Name | Logout
         // Dashboard link is only shown to registered users — guests have no dashboard
+        // Show Admin link only if the user has is_admin=true on their account
+        const adminLink = user.is_admin
+            ? `<a href="admin.html" style="color:rgba(255,255,255,0.9); font-size:0.9rem;">Admin</a>`
+            : "";
+
         navLinks.innerHTML = `
             <a href="post.html" class="btn-nav btn">+ Post Item</a>
             <a href="dashboard.html" style="color:rgba(255,255,255,0.9); font-size:0.9rem;">Dashboard</a>
+            ${adminLink}
             <span style="color:rgba(255,255,255,0.8); font-size:0.9rem;">
                 Hello, ${firstName}
             </span>

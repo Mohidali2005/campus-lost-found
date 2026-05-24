@@ -3,14 +3,18 @@
 # Items router — handles posting, browsing, searching, and retrieving items.
 #
 # Phase 3 endpoints:
-#   POST /items              — post a new lost or found item (guest or registered)
-#   GET  /items/{id}         — get a single item by its ID
+#   POST /items                — post a new lost or found item (guest or registered)
+#   GET  /items/{id}           — get a single item by its ID
 #
 # Phase 4 endpoints:
-#   GET  /items              — browse all items with optional filters + pagination
+#   GET  /items                — browse all items with optional filters + pagination
 #
 # Phase 7 endpoints:
-#   GET  /items/{id}/matches — list AI-matched items for a given item
+#   GET  /items/{id}/matches   — list AI-matched items for a given item
+#
+# Phase 9 endpoints:
+#   DELETE /items/{id}         — delete an item (owner or admin only)
+#   PATCH  /items/{id}/resolve — mark an item as resolved (owner or admin only)
 #
 # IMPORTANT — why we use Form(...) instead of a Pydantic model:
 #   When a request includes a file upload, it must be sent as multipart/form-data
@@ -29,7 +33,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 from sqlalchemy.orm import Session
 
 from backend.config import settings
-from backend.dependencies import get_db, get_optional_user
+from backend.dependencies import get_db, get_optional_user, get_current_user
 from backend.models import Item, ItemType, ItemStatus, Match, User
 from backend.schemas import ItemOut, ItemListOut, MatchOut
 
@@ -513,3 +517,115 @@ def get_item_matches(
         )
 
     return result
+
+
+# ── Endpoint 5: DELETE /items/{id} — delete an item (Phase 9) ────────────────
+
+@router.delete(
+    "/{item_id}",
+    status_code=status.HTTP_204_NO_CONTENT,  # 204 = success, no body returned
+    summary="Delete an item (owner or admin only)",
+)
+def delete_item(
+    item_id: int,
+    current_user: User = Depends(get_current_user),  # must be logged in
+    db: Session = Depends(get_db),
+):
+    """
+    Permanently deletes a lost/found item and all related data.
+
+    Who can delete:
+      - The registered user who originally posted the item (owner)
+      - Any admin user (is_admin=True)
+
+    Guests cannot delete items — they have no account to verify ownership.
+
+    What gets deleted:
+      - The item itself
+      - All messages on that item (cascade="all, delete-orphan" on the model)
+      - All AI match records that reference this item (deleted manually below,
+        since the Match model doesn't have cascade set up)
+
+    Returns 204 No Content on success (no response body — standard for DELETE).
+    Returns 404 if the item doesn't exist.
+    Returns 403 if the requester is not the owner or an admin.
+    """
+    # ── Find the item ──────────────────────────────────────────────────────────
+    item = db.query(Item).filter(Item.id == item_id).first()
+    if item is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Item with id {item_id} not found.",
+        )
+
+    # ── Check ownership or admin ───────────────────────────────────────────────
+    # item.user_id is None for guest-posted items — guests can't delete via API
+    # since they have no account. Only the owner or an admin can delete.
+    is_owner = (item.user_id == current_user.id)
+    if not is_owner and not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only delete your own items.",
+        )
+
+    # ── Delete related Match rows first ───────────────────────────────────────
+    # The Match model has no cascade delete, so SQLite would leave orphan rows.
+    # We manually delete any match that involves this item on either side.
+    db.query(Match).filter(
+        (Match.lost_item_id == item_id) | (Match.found_item_id == item_id)
+    ).delete(synchronize_session=False)
+
+    # ── Delete the item (messages cascade automatically) ──────────────────────
+    db.delete(item)
+    db.commit()
+    # Return None — FastAPI sends 204 No Content automatically
+
+
+# ── Endpoint 6: PATCH /items/{id}/resolve — mark resolved (Phase 9) ──────────
+
+@router.patch(
+    "/{item_id}/resolve",
+    response_model=ItemOut,
+    summary="Mark an item as resolved (owner or admin only)",
+)
+def resolve_item(
+    item_id: int,
+    current_user: User = Depends(get_current_user),  # must be logged in
+    db: Session = Depends(get_db),
+):
+    """
+    Marks a lost/found item as resolved (i.e. the item was returned or claimed).
+
+    Who can resolve:
+      - The registered user who originally posted the item (owner)
+      - Any admin user
+
+    Once resolved, the item is hidden from the default browse feed (which
+    filters to status=open by default) but can still be viewed directly.
+
+    Returns the updated item with status="resolved".
+    Returns 404 if the item doesn't exist.
+    Returns 403 if the requester is not the owner or an admin.
+    """
+    # ── Find the item ──────────────────────────────────────────────────────────
+    item = db.query(Item).filter(Item.id == item_id).first()
+    if item is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Item with id {item_id} not found.",
+        )
+
+    # ── Check ownership or admin ───────────────────────────────────────────────
+    is_owner = (item.user_id == current_user.id)
+    if not is_owner and not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only resolve your own items.",
+        )
+
+    # ── Update status to resolved ──────────────────────────────────────────────
+    item.status = ItemStatus.resolved
+    db.commit()
+    db.refresh(item)  # reload from DB so the returned object is up to date
+
+    return item

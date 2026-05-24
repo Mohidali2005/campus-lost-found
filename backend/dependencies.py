@@ -155,7 +155,27 @@ def get_current_user(
     return user  # FastAPI injects this User object into the route handler
 
 
-# ── 4. Optional auth dependency ───────────────────────────────────────────────
+# ── 4. Admin-only auth dependency ────────────────────────────────────────────
+
+def get_admin_user(current_user: User = Depends(get_current_user)) -> User:
+    """
+    Admin-only dependency. Builds on get_current_user — first checks the token
+    is valid (401 if not), then checks the user has is_admin=True (403 if not).
+
+    Usage:
+        @router.get("/admin/users")
+        def list_users(admin: User = Depends(get_admin_user)):
+            ...
+    """
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required.",
+        )
+    return current_user
+
+
+# ── 5. Optional auth dependency ───────────────────────────────────────────────
 
 def get_optional_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme_optional),
