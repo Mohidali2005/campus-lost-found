@@ -286,9 +286,10 @@ def list_items(
     # Searches inside both `title` and `description` fields.
     # Case-insensitive — "laptop" matches "Blue Laptop".
 
-    status: Optional[ItemStatus] = ItemStatus.open,
-    # Filter by item status. Defaults to "open" so resolved items
-    # don't clutter the main feed. Pass status=resolved to see closed items.
+    status: Optional[ItemStatus] = None,
+    # Filter by item status. Defaults to None (show ALL items — both open and resolved).
+    # Pass status=open to see only active listings, status=resolved for closed ones.
+    # The frontend sends an explicit status so this default is mainly for direct API use.
 
     page: int = 1,
     # Which page of results to return. Page 1 = first page.

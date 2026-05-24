@@ -27,6 +27,7 @@ async function loadItems() {
     const q        = document.getElementById("search-q").value.trim();
     const type     = document.getElementById("filter-type").value;      // "" | "lost" | "found"
     const category = document.getElementById("filter-category").value;  // "" | "Electronics" | ...
+    const status   = document.getElementById("filter-status").value;    // "open" | "resolved" | ""
 
     // ── Build query string ─────────────────────────────────────────────────────
     // URLSearchParams safely encodes values — handles spaces, special chars etc.
@@ -36,6 +37,9 @@ async function loadItems() {
     if (q)        params.set("q", q);
     if (type)     params.set("type", type);
     if (category) params.set("category", category);
+    // Only send status when a specific value is selected.
+    // "" (All Items) omits the param so the backend shows every status.
+    if (status)   params.set("status", status);
 
     try {
         // Call GET /items?page=1&page_size=12&q=laptop&type=lost etc.
@@ -181,9 +185,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const typeParam     = urlParams.get("type");
     const categoryParam = urlParams.get("category");
     const qParam        = urlParams.get("q");
-    if (typeParam)     document.getElementById("filter-type").value     = typeParam;
-    if (categoryParam) document.getElementById("filter-category").value = categoryParam;
-    if (qParam)        document.getElementById("search-q").value        = qParam;
+    const statusParam   = urlParams.get("status");
+    if (typeParam)                document.getElementById("filter-type").value     = typeParam;
+    if (categoryParam)            document.getElementById("filter-category").value = categoryParam;
+    if (qParam)                   document.getElementById("search-q").value        = qParam;
+    // statusParam===null means not in URL → keep default "open" selected in the dropdown
+    if (statusParam !== null)     document.getElementById("filter-status").value   = statusParam;
 
     // Load items immediately so the page isn't blank on arrival
     await loadItems();
@@ -196,5 +203,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("filter-type")
         .addEventListener("change", handleSearch);
     document.getElementById("filter-category")
+        .addEventListener("change", handleSearch);
+    document.getElementById("filter-status")
         .addEventListener("change", handleSearch);
 });
