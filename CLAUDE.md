@@ -62,7 +62,14 @@ Uploaded photos are saved to `backend/uploads/` and served by FastAPI's `StaticF
 | 8 | Registered user dashboard (backend + frontend) | ⬜ |
 | 9 | Polish & admin panel | ⬜ |
 
-Work one phase at a time. After each phase: update the status above, commit with a descriptive message, and push to `https://github.com/Mohidali2005/campus-lost-found`.
+Work one phase at a time. After each phase:
+1. Update the status table above to ✅ Done
+2. Update the Phase completion notes section below with what was built
+3. `git add` only the files changed in that phase
+4. `git commit` with a message in the format: `Phase N: short description\n\n- bullet list of changes`
+5. `git push origin main`
+
+Do NOT batch multiple phases into one commit. Each phase gets its own commit.
 
 ## Phase completion notes
 
