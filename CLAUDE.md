@@ -1,122 +1,70 @@
-# Campus Lost & Found — Project Context for Claude
+# Campus Lost & Found
 
-## What This Project Is
-A web app for students to post lost and found items with photos. Key features:
-- No forced login — anyone can browse, post, and message without an account
-- Every item has a public message thread (like a comment section) for open communication
-- Found items show a **drop-off location** field so people can go collect without messaging
-- AI image matching (CLIP) auto-suggests when a lost item photo matches a found item photo
-- Registered accounts are optional — they unlock a personal dashboard and AI match alerts
+Campus bulletin-board style web app where students post lost/found items with photos. No account required to post or message — guest access is a first-class feature. Registered accounts add a dashboard and AI match alerts. Built with static HTML/JS frontend + FastAPI backend.
 
-## Tech Stack
-- **Frontend:** HTML5 + CSS3 + Bootstrap 5 (CDN) + Vanilla JS
-- **Backend:** Python 3.11 + FastAPI
-- **Database:** SQLite via SQLAlchemy
-- **Auth:** JWT (python-jose + passlib/bcrypt) — optional, only needed for dashboard
-- **AI Matching:** CLIP ViT-B/32 via `transformers` + `torch`
-- **Image Storage:** Local filesystem at `backend/uploads/`
+## Commands
 
-## Project Structure
-```
-campus-lost-found/
-├── backend/
-│   ├── main.py                  # FastAPI app entry point, CORS, startup
-│   ├── config.py                # Settings: DB URL, secret key, upload path, CLIP threshold
-│   ├── database.py              # SQLAlchemy engine + SessionLocal + Base
-│   ├── models.py                # ORM models: User, Item, Message, Match
-│   ├── schemas.py               # Pydantic request/response schemas
-│   ├── dependencies.py          # get_db(), get_current_user(), get_optional_user()
-│   ├── routers/
-│   │   ├── auth.py              # POST /auth/register, POST /auth/login
-│   │   ├── items.py             # POST/GET/DELETE items (guest + registered)
-│   │   ├── messages.py          # GET/POST message threads on items
-│   │   ├── matches.py           # GET AI match suggestions for an item
-│   │   └── admin.py             # Admin-only routes
-│   ├── services/
-│   │   ├── auth_service.py      # Password hashing, JWT create/decode
-│   │   └── matching_service.py  # CLIP model, get_embedding(), find_matches()
-│   └── uploads/                 # Saved item photos (gitignored)
-├── frontend/
-│   ├── index.html               # Landing page — no login wall
-│   ├── browse.html              # Browse all items + search + filters
-│   ├── item-detail.html         # Item info + drop-off location + message thread + AI matches
-│   ├── post-item.html           # Post form (works for guest and logged-in)
-│   ├── login.html               # Login page
-│   ├── register.html            # Register page
-│   ├── dashboard.html           # Registered user dashboard
-│   ├── admin.html               # Admin panel
-│   ├── css/style.css            # All custom styles
-│   └── js/
-│       ├── api.js               # Fetch wrapper — sends token only if present
-│       ├── auth.js              # login(), register(), logout()
-│       ├── items.js             # postItem(), getItems(), getItem()
-│       ├── messages.js          # getMessages(), postMessage()
-│       ├── matches.js           # getMatches(), render match cards
-│       └── dashboard.js         # Dashboard page logic
-├── requirements.txt
-├── .env                         # Secret values — NOT committed
-└── CLAUDE.md                    # This file
+**Always use `py -3.11`** — Python 3.7 is also installed on this machine and is the system default. Using plain `python` or `pip` will target 3.7 and fail.
+
+```bash
+# Start backend (must run from project root, not from backend/)
+py -3.11 -m uvicorn backend.main:app --reload
+
+# Install dependencies
+py -3.11 -m pip install -r requirements.txt
+
+# API docs (auto-generated, available when server is running)
+http://127.0.0.1:8000/docs
 ```
 
-## Database Models
-```
-User     id, name, email, student_id, password_hash, is_admin, created_at
+Frontend is plain static HTML — open `frontend/index.html` directly in a browser or serve with any static file server.
 
-Item     id, user_id(nullable), poster_name, poster_contact,
-         type(lost|found), title, description, category,
-         location, date_occurred, drop_off_location(nullable),
-         image_path, embedding(JSON), status(open|resolved), created_at
+## Architecture
 
-Message  id, item_id(FK), user_id(nullable), sender_name, body, created_at
+### Request flow
+`frontend JS (api.js fetch wrapper)` → `FastAPI router` → `SQLAlchemy ORM (SQLite)` or `matching_service.py (CLIP)`
 
-Match    id, lost_item_id(FK), found_item_id(FK), similarity_score, created_at
-```
+### Backend patterns
 
-## Guest vs Registered Access
-| Action | Guest | Registered |
-|---|---|---|
-| Browse + search items | Yes | Yes |
-| Post lost/found item | Yes (name + contact required) | Yes |
-| Message on any post | Yes (name required) | Yes (name pre-filled) |
-| Personal dashboard | No | Yes |
-| AI match notifications | No (sees on item page) | Yes (in dashboard) |
-| Edit/delete own posts | No | Yes |
+**Imports use the `backend.` package prefix** — all modules import as `from backend.config import settings`, never relative imports. This is why the server must start from the project root.
 
-## Build Phases & Status
+**No DB migration tool** — `create_tables()` in `database.py` is called via the FastAPI `lifespan` hook on every startup. Adding a new column requires dropping and recreating the DB file (`campus_lostfound.db` at project root) during development.
+
+**Two auth dependency variants** in `dependencies.py` (not yet written, Phase 2):
+- `get_current_user()` — strict, throws 401 if no token; used on protected routes (post item, dashboard, delete)
+- `get_optional_user()` — returns `User | None`; used on all public routes so they work with or without a token
+
+**Routers are not yet wired** — `main.py` currently only has the `/health` endpoint. Each phase adds a router via `app.include_router(...)`.
+
+### Guest/registered duality
+Both `Item` and `Message` models have a nullable `user_id`. The invariant: either `user_id` is set (registered user) or `poster_name` + `poster_contact` are the only identity (guest). This applies equally to messages (`sender_name` always set, `user_id` nullable). No separate guest table exists.
+
+### AI matching
+`Item.embedding` is a `Text` column storing a JSON-encoded `list[float]` (512-dim CLIP vector). It is computed once when an item is first posted and never recomputed. `matching_service.py` (Phase 6) loads the CLIP model once at module import time and reuses it for every request.
+
+### Static file serving
+Uploaded photos are saved to `backend/uploads/` and served by FastAPI's `StaticFiles` mount at `/uploads`. The `uploads/` directory is gitignored (only `.gitkeep` is committed).
+
+## Build phases
+
 | Phase | Description | Status |
 |---|---|---|
-| 1 | Project skeleton: folder structure, DB models, server health check | ✅ Done — commit: "phase 1" |
-| 2 | Authentication: register, login, JWT (optional for users) | ⬜ Not started |
-| 3 | Item posting: form with photo upload, guest + registered | ⬜ Not started |
-| 4 | Browse & search: item cards, filters, item detail page | ⬜ Not started |
-| 5 | Message threads: public comment section on every item | ⬜ Not started |
-| 6 | AI image matching: CLIP embeddings, auto-match suggestions | ⬜ Not started |
-| 7 | User dashboard: my posts, match alerts | ⬜ Not started |
-| 8 | Polish & admin panel | ⬜ Not started |
+| 1 | Skeleton: models, DB, health check | ✅ Done |
+| 2 | Auth: register, login, JWT | ⬜ |
+| 3 | Item posting with photo upload | ⬜ |
+| 4 | Browse & search | ⬜ |
+| 5 | Public message threads on items | ⬜ |
+| 6 | CLIP image matching | ⬜ |
+| 7 | Registered user dashboard | ⬜ |
+| 8 | Polish & admin panel | ⬜ |
 
-## Key Decisions
-- Communication is public (message threads on item pages) — no private inbox needed
-- No login required to post or message — lowers barrier for casual users
-- Drop-off location on found items lets people collect without any interaction
-- CLIP embeddings stored in DB so AI never re-processes old photos
-- `get_optional_user()` used on all public routes so they work with or without a token
+Work one phase at a time. After each phase: update the status above, commit with a descriptive message, and push to `https://github.com/Mohidali2005/campus-lost-found`.
 
-## How to Run
-```bash
-# Install dependencies
-pip install -r requirements.txt
+## Key data notes
+- `Item.date_occurred` is stored as a plain `String` (`YYYY-MM-DD`), not a `Date` column
+- `Item.category` is a free-form string — no enum enforcement at DB level
+- `Item.drop_off_location` is only meaningful for `type = "found"` items
+- JWT tokens expire after 7 days (`access_token_expire_minutes = 60 * 24 * 7` in `config.py`)
 
-# Start backend (from project root)
-uvicorn backend.main:app --reload
-
-# Frontend: open frontend/index.html directly in browser
-# or use a simple static server
-```
-
-## Environment Variables (.env)
-```
-SECRET_KEY=your-secret-key-here
-DATABASE_URL=sqlite:///./campus_lostfound.db
-UPLOAD_DIR=backend/uploads
-CLIP_THRESHOLD=0.70
-```
+## Environment
+Copy `.env.example` to `.env` before first run. The DB file (`campus_lostfound.db`) is created automatically at the project root on first startup.
