@@ -174,6 +174,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Render the nav (shows login/logout state)
     await updateNav();
 
+    // Pre-fill the filter form from URL query params.
+    // This makes sidebar links like index.html?type=found actually filter correctly —
+    // without this, loadItems() reads the <select> which defaults to "" (all types).
+    const urlParams = new URLSearchParams(window.location.search);
+    const typeParam     = urlParams.get("type");
+    const categoryParam = urlParams.get("category");
+    const qParam        = urlParams.get("q");
+    if (typeParam)     document.getElementById("filter-type").value     = typeParam;
+    if (categoryParam) document.getElementById("filter-category").value = categoryParam;
+    if (qParam)        document.getElementById("search-q").value        = qParam;
+
     // Load items immediately so the page isn't blank on arrival
     await loadItems();
 
