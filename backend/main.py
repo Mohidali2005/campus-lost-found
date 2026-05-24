@@ -13,10 +13,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
+import asyncio
 import os
 
 from backend.database import create_tables
 from backend.config import settings
+from backend.services import matching_service  # for eager CLIP preloading
 
 # Import routers — each router lives in backend/routers/<name>.py
 # We add more routers here as each phase is completed.
@@ -41,6 +43,12 @@ async def lifespan(app: FastAPI):
     """
     create_tables()                                  # Phase 1: creates users, items, messages, matches tables
     os.makedirs(settings.upload_dir, exist_ok=True)  # create backend/uploads/ if missing
+
+    # Preload the CLIP model now so the first item post is instant.
+    # asyncio.to_thread() runs the blocking load in a thread pool so it
+    # doesn't freeze the async event loop while downloading/reading the model.
+    await asyncio.to_thread(matching_service.preload_model)
+
     yield
     # Nothing to clean up on shutdown for now
 

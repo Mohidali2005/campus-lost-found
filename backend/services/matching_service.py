@@ -99,6 +99,19 @@ def _load_model() -> bool:
         return False
 
 
+# ── Eager startup loader ──────────────────────────────────────────────────────
+
+def preload_model() -> None:
+    """
+    Public function called at server startup to load CLIP immediately.
+
+    Called from main.py's lifespan hook (before the server accepts any
+    requests) so the model is warm before the first user ever posts an item.
+    If loading fails the server still starts — matching is just disabled.
+    """
+    _load_model()
+
+
 # ── Cosine similarity ─────────────────────────────────────────────────────────
 
 def _cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
