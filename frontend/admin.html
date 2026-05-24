@@ -233,11 +233,13 @@
 
         // Load users and items in parallel — both requests fire at the same time
         try {
-            [_users, _itemsPage] = await Promise.all([
+            // Destructure into local variables first, then assign to the module-level arrays
+            const [usersResult, itemsResult] = await Promise.all([
                 apiGet("/admin/users"),
                 apiGet("/admin/items?page_size=100"),
             ]);
-            _items = _itemsPage.items;
+            _users = usersResult;
+            _items = itemsResult.items;
 
             document.getElementById("admin-spinner").style.display = "none";
 

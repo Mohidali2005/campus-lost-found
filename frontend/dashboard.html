@@ -317,7 +317,7 @@
         // If the item has a photo we show a thumbnail, otherwise a generic icon.
         const photoHtml = item.image_path
             ? `<img
-                   src="http://127.0.0.1:8000${escapeHtml(item.image_path)}"
+                   src="${API_BASE}${escapeHtml(item.image_path)}"
                    alt="Photo of ${escapeHtml(item.title)}"
                    class="my-item-thumb"
                >`
