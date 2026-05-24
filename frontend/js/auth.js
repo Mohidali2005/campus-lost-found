@@ -111,22 +111,20 @@ async function updateSidebar() {
     // getCurrentUser() is cached so this won't fire a second network request
     const user = await getCurrentUser();
 
-    // Work out which page and filter are active so we can highlight the right link
-    const page       = window.location.pathname.split("/").pop() || "index.html";
-    const typeFilter = new URLSearchParams(window.location.search).get("type");
+    // Work out which page and section are active so we can highlight the right link
+    const page    = window.location.pathname.split("/").pop() || "index.html";
+    const section = new URLSearchParams(window.location.search).get("section"); // "lost"|"found"|null
 
-    // Returns the class string for a sidebar link — adds "active" when this link
-    // matches the current page + (optionally) the query-string filter
+    // Returns the CSS class for a sidebar link — adds "active" on the current page/section
     function linkClass(href) {
         let isActive = false;
-        if (href === "index.html?type=lost")  isActive = page === "index.html" && typeFilter === "lost";
-        else if (href === "index.html?type=found") isActive = page === "index.html" && typeFilter === "found";
-        else if (href === "index.html")        isActive = page === "index.html" && !typeFilter;
-        else                                   isActive = page === href;
+        if (href === "index.html?section=lost")  isActive = page === "index.html" && section === "lost";
+        else if (href === "index.html?section=found") isActive = page === "index.html" && section === "found";
+        else if (href === "index.html")          isActive = page === "index.html" && !section;
+        else                                     isActive = page === href;
         return isActive ? "sidebar-link active" : "sidebar-link";
     }
 
-    // Auth-specific section: show account links or login/register
     const accountSection = user ? `
         <hr class="sidebar-divider">
         <div class="sidebar-section-label">My Account</div>
@@ -143,9 +141,9 @@ async function updateSidebar() {
 
     nav.innerHTML = `
         <div class="sidebar-section-label">Browse</div>
-        <a href="index.html"           class="${linkClass("index.html")}">🏠 All Items</a>
-        <a href="index.html?type=lost"  class="${linkClass("index.html?type=lost")}">🔍 Lost Items</a>
-        <a href="index.html?type=found" class="${linkClass("index.html?type=found")}">📦 Found Items</a>
+        <a href="index.html"                  class="${linkClass("index.html")}">🏠 All Items</a>
+        <a href="index.html?section=lost"  class="${linkClass("index.html?section=lost")}">🔍 Lost Items</a>
+        <a href="index.html?section=found" class="${linkClass("index.html?section=found")}">📦 Found Items</a>
         <hr class="sidebar-divider">
         <a href="post.html" class="${linkClass("post.html")}">➕ Post an Item</a>
         ${accountSection}

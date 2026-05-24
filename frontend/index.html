@@ -11,7 +11,6 @@
     <!-- ── Navigation bar ──────────────────────────────────────────────────── -->
     <nav class="navbar">
         <div class="container">
-            <!-- Hamburger button: only visible on mobile, toggles the sidebar -->
             <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Open menu">&#9776;</button>
             <a href="index.html" class="nav-brand">LUMS <span>Lost &amp; Found</span></a>
             <div class="nav-links" id="nav-links"></div>
@@ -19,27 +18,24 @@
     </nav>
 
     <!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
-    <!-- Filled by updateSidebar() in auth.js, called from updateNav()         -->
     <aside class="sidebar" id="sidebar">
         <nav id="sidebar-nav"></nav>
     </aside>
 
-    <!-- ── Main content ────────────────────────────────────────────────────── -->
+    <!-- ── Main content ─────────────────────────────────────────────────────── -->
     <main class="page-content">
         <div class="container">
 
-            <!-- Page heading — text updated dynamically by renderItems() in app.js -->
+            <!-- Heading — updated by renderItems() based on the active section -->
             <div class="page-header">
                 <h1 id="page-heading">Lost &amp; Found Board</h1>
-                <p id="page-subtitle">Browse lost and found items across LUMS campus. Find yours or help a fellow student.</p>
+                <p id="page-subtitle">Browse lost and found items across LUMS campus.</p>
             </div>
 
-            <!-- Search & filter form                                           -->
-            <!-- Submitting reloads items via handleSearch() in app.js         -->
-            <!-- Changing a select also triggers handleSearch() automatically  -->
+            <!-- Search bar — keyword + category only.
+                 Section (Lost / Found / All) is handled by the sidebar links. -->
             <form id="search-form" class="search-bar">
 
-                <!-- Keyword search: searches title AND description -->
                 <input
                     type="text"
                     id="search-q"
@@ -47,14 +43,6 @@
                     autocomplete="off"
                 >
 
-                <!-- Type filter -->
-                <select id="filter-type">
-                    <option value="">All Types</option>
-                    <option value="lost">Lost Items</option>
-                    <option value="found">Found Items</option>
-                </select>
-
-                <!-- Category filter -->
                 <select id="filter-category">
                     <option value="">All Categories</option>
                     <option value="Electronics">Electronics</option>
@@ -68,43 +56,25 @@
                     <option value="Other">Other</option>
                 </select>
 
-                <!-- Status filter — "All Items" by default so nothing is hidden -->
-                <select id="filter-status">
-                    <option value="">All Items</option>
-                    <option value="open">Open Only</option>
-                    <option value="resolved">Resolved Only</option>
-                </select>
-
                 <button type="submit" class="btn btn-primary">Search</button>
             </form>
 
-            <!-- Result count ("6 items found") — set by app.js -->
             <p id="result-count" class="text-muted mt-1" style="font-size: 0.88rem;"></p>
 
-            <!-- Items grid — populated by renderItems() in app.js -->
             <div id="items-container" class="items-grid">
                 <div class="spinner"></div>
             </div>
 
-            <!-- Pagination controls — populated by renderPagination() in app.js -->
             <div id="pagination" class="pagination"></div>
 
         </div>
     </main>
 
-    <!-- Scripts must load in this order:                                       -->
-    <!--   api.js   — fetch helpers (no DOM deps)                              -->
-    <!--   auth.js  — getCurrentUser, updateNav, escapeHtml (uses api.js)      -->
-    <!--   app.js   — page logic (uses both api.js and auth.js)                -->
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
     <script>
-        // Toggle sidebar open/closed on mobile (class on body triggers the CSS)
-        function toggleSidebar() {
-            document.body.classList.toggle("sidebar-open");
-        }
-        // Clicking the dim overlay (the ::after pseudo-element) closes the sidebar
+        function toggleSidebar() { document.body.classList.toggle("sidebar-open"); }
         document.addEventListener("click", function(e) {
             if (document.body.classList.contains("sidebar-open")) {
                 const sidebar = document.getElementById("sidebar");
