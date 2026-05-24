@@ -89,11 +89,11 @@ function renderItem(item) {
 
             <!-- Right column: all item details -->
             <div class="item-detail-info">
-                <!-- Type badge (LOST/FOUND) + status badge (OPEN/RESOLVED) -->
-                <span class="badge badge-${item.type}">${item.type.toUpperCase()}</span>
-                <span class="badge badge-${item.status}" style="margin-left:0.4rem">
-                    ${item.status.toUpperCase()}
-                </span>
+                <!-- Single badge: FOUND (green) if resolved or type=found, else LOST (red) -->
+                ${(item.type === "found" || item.status === "resolved")
+                    ? `<span class="badge badge-found">FOUND</span>`
+                    : `<span class="badge badge-lost">LOST</span>`
+                }
 
                 <h1>${escapeHtml(item.title)}</h1>
 
