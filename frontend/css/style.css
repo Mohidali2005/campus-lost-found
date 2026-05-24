@@ -1,0 +1,499 @@
+/* frontend/css/style.css */
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Global styles for LUMS Lost & Found                                         */
+/* Colour palette uses LUMS green branding throughout                          */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+/* CSS custom properties (variables) ─ change these to retheme the entire site */
+:root {
+    --primary:        #006633;   /* LUMS dark green — nav, buttons, links       */
+    --primary-dark:   #004d26;   /* darker green — hover states                 */
+    --primary-light:  #e8f5e9;   /* very light green — highlights, backgrounds  */
+    --lost-color:     #c62828;   /* red — "LOST" badge                          */
+    --found-color:    #2e7d32;   /* green — "FOUND" badge                       */
+    --text:           #212121;   /* near-black — body text                      */
+    --text-muted:     #757575;   /* gray — secondary text, dates, labels        */
+    --border:         #e0e0e0;   /* light gray — card borders, dividers         */
+    --bg:             #f4f6f4;   /* light green-tinted page background          */
+    --card-bg:        #ffffff;   /* white — card and form backgrounds           */
+    --danger:         #d32f2f;   /* red — error messages                        */
+    --nav-height:     64px;      /* height of the sticky navbar                 */
+}
+
+/* ── Reset & base ──────────────────────────────────────────────────────────── */
+
+/* border-box makes width + padding calculations intuitive:
+   width: 200px WITH padding: 20px still equals 200px total width */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+a {
+    color: var(--primary);
+    text-decoration: none;
+}
+a:hover { text-decoration: underline; }
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ── Layout ────────────────────────────────────────────────────────────────── */
+
+/* Centers content and adds horizontal padding */
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Push page content below the fixed navbar so it isn't hidden underneath */
+.page-content {
+    padding-top: calc(var(--nav-height) + 1.5rem);
+    padding-bottom: 3rem;
+}
+
+/* ── Navbar ────────────────────────────────────────────────────────────────── */
+
+/* Fixed navbar stays at the top as the user scrolls */
+.navbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--nav-height);
+    background-color: var(--primary);
+    color: white;
+    z-index: 100;                        /* above all page content */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.navbar .container {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.nav-brand {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -0.3px;
+}
+.nav-brand:hover { text-decoration: none; opacity: 0.9; }
+.nav-brand span  { font-weight: 300; opacity: 0.8; }
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-links a {
+    color: rgba(255,255,255,0.85);
+    padding: 0.4rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: background 0.15s;
+}
+.nav-links a:hover {
+    background: rgba(255,255,255,0.15);
+    text-decoration: none;
+    color: white;
+}
+
+/* White pill button inside the dark navbar */
+.nav-links .btn-nav {
+    background: white;
+    color: var(--primary);
+    font-weight: 600;
+    padding: 0.4rem 1rem;
+}
+.nav-links .btn-nav:hover { background: var(--primary-light); }
+
+/* ── Buttons ───────────────────────────────────────────────────────────────── */
+
+.btn {
+    display: inline-block;
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: background 0.15s, opacity 0.15s;
+    text-align: center;
+    font-family: inherit;
+}
+.btn:hover    { opacity: 0.9; text-decoration: none; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-dark); opacity: 1; }
+
+.btn-outline {
+    background: transparent;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+}
+.btn-outline:hover { background: var(--primary-light); opacity: 1; }
+
+.btn-sm   { padding: 0.3rem 0.75rem; font-size: 0.85rem; }
+.btn-full { width: 100%; }
+
+/* ── Badges (Lost / Found / status) ───────────────────────────────────────── */
+
+/* Pill-shaped labels for item type and status */
+.badge {
+    display: inline-block;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;           /* fully round ends = pill shape */
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-lost     { background: #fde8e8; color: var(--lost-color); }
+.badge-found    { background: #e8f5e9; color: var(--found-color); }
+.badge-open     { background: #e3f2fd; color: #1565c0; }
+.badge-resolved { background: #f5f5f5; color: #616161; }
+
+/* ── Item cards ────────────────────────────────────────────────────────────── */
+
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;                /* so card-img corners are clipped by the card */
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+.card:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.10);
+    transform: translateY(-2px);     /* subtle lift on hover */
+}
+
+/* Photo when the item has one */
+.card-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;               /* crop to fill without distortion */
+}
+
+/* Placeholder shown when the item has no photo */
+.card-no-img {
+    width: 100%;
+    height: 180px;
+    background: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 3rem;
+    font-weight: 200;
+    letter-spacing: 2px;
+    opacity: 0.7;
+}
+
+.card-body   { padding: 1rem; }
+.card-footer {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Card title: bold, clamped to 2 lines so all cards stay the same height */
+.card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0.4rem 0 0.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.card-meta { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.2rem; }
+
+/* ── Items grid ────────────────────────────────────────────────────────────── */
+
+/* auto-fill: creates as many columns as fit; minmax(260px, 1fr): each is at least 260px */
+.items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1rem;
+}
+
+/* ── Search & filter bar ───────────────────────────────────────────────────── */
+
+.search-bar {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-wrap: wrap;                  /* wraps onto next line on small screens */
+    gap: 0.75rem;
+    align-items: flex-end;
+}
+
+.search-bar input,
+.search-bar select {
+    flex: 1;
+    min-width: 160px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+}
+.search-bar input:focus,
+.search-bar select:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: white;
+}
+
+/* ── Page header ───────────────────────────────────────────────────────────── */
+
+.page-header           { margin-bottom: 1.25rem; }
+.page-header h1        { font-size: 1.75rem; font-weight: 700; }
+.page-header p         { color: var(--text-muted); margin-top: 0.25rem; }
+
+/* ── Pagination ────────────────────────────────────────────────────────────── */
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+.pagination span { font-size: 0.9rem; color: var(--text-muted); }
+
+/* ── Forms ─────────────────────────────────────────────────────────────────── */
+
+.form-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 560px;
+    margin: 0 auto;
+}
+.form-card h1    { font-size: 1.5rem; margin-bottom: 0.25rem; }
+.form-card .subtitle { color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
+
+.form-group { margin-bottom: 1.1rem; }
+
+.form-group label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+
+.form-group .hint { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem; }
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: var(--text);
+    background: white;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0,102,51,0.08);
+}
+
+.form-group textarea { resize: vertical; min-height: 90px; }
+
+/* ── Lost / Found radio toggle ─────────────────────────────────────────────── */
+
+/* We hide the actual radio button and style the <label> as a card instead */
+.type-toggle { display: flex; gap: 0.75rem; }
+.type-toggle input[type="radio"] { display: none; }
+.type-toggle label {
+    flex: 1;
+    text-align: center;
+    padding: 0.6rem;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.15s;
+    user-select: none;
+}
+/* Highlight label when the matching radio is checked */
+.type-toggle input[value="lost"]:checked  + label { border-color: var(--lost-color);  background: #fde8e8; color: var(--lost-color);  }
+.type-toggle input[value="found"]:checked + label { border-color: var(--found-color); background: #e8f5e9; color: var(--found-color); }
+
+/* ── Item detail page ──────────────────────────────────────────────────────── */
+
+/* Two-column layout: photo left, info right */
+.item-detail {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+    margin-top: 1rem;
+}
+
+.item-detail-img {
+    width: 100%;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    object-fit: cover;
+    max-height: 420px;
+}
+
+.item-detail-no-img {
+    width: 100%;
+    height: 280px;
+    background: var(--primary-light);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 4rem;
+    font-weight: 200;
+    opacity: 0.6;
+}
+
+.item-detail-info h1 { font-size: 1.5rem; margin: 0.5rem 0 1rem; }
+
+/* Each row in the item info section: label + value side by side */
+.detail-row        { display: flex; gap: 0.5rem; margin-bottom: 0.65rem; font-size: 0.9rem; }
+.detail-label      { font-weight: 600; color: var(--text-muted); min-width: 110px; }
+.detail-value      { color: var(--text); }
+
+/* ── Messages ──────────────────────────────────────────────────────────────── */
+
+.messages-section {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.messages-section h2 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.message-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+}
+.message-item:last-child { border-bottom: none; }
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.3rem;
+}
+
+.message-sender { font-weight: 600; font-size: 0.9rem; }
+.message-time   { font-size: 0.8rem; color: var(--text-muted); }
+.message-body   { font-size: 0.9rem; line-height: 1.5; }
+
+.message-form {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+}
+.message-form h3 { font-size: 0.95rem; margin-bottom: 0.75rem; }
+
+/* ── Alerts ────────────────────────────────────────────────────────────────── */
+
+.alert {
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+.alert-error   { background: #fde8e8; color: var(--danger);  border: 1px solid #f5c2c2; }
+.alert-success { background: #e8f5e9; color: #1b5e20;        border: 1px solid #c8e6c9; }
+.alert-info    { background: #e3f2fd; color: #0d47a1;        border: 1px solid #bbdefb; }
+
+/* ── Empty state ───────────────────────────────────────────────────────────── */
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-muted);
+}
+.empty-state h3 { color: var(--text); margin-bottom: 0.5rem; }
+
+/* ── Loading spinner ───────────────────────────────────────────────────────── */
+
+/* CSS-only spinner using a rotating border */
+.spinner {
+    display: flex;
+    justify-content: center;
+    padding: 3rem;
+}
+.spinner::after {
+    content: '';
+    width: 36px;
+    height: 36px;
+    border: 4px solid var(--border);
+    border-top-color: var(--primary);   /* only the top arc is coloured = spinning effect */
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Utility classes ───────────────────────────────────────────────────────── */
+
+.text-muted  { color: var(--text-muted); }
+.text-center { text-align: center; }
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
+.hidden { display: none !important; }  /* !important so JS .classList.add("hidden") always wins */
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    /* Stack item detail photo above info on small screens */
+    .item-detail { grid-template-columns: 1fr; }
+
+    /* Stack search bar inputs vertically on small screens */
+    .search-bar { flex-direction: column; }
+    .search-bar input, .search-bar select { min-width: 100%; }
+
+    /* Hide secondary nav links on mobile to save space */
+    .nav-links a:not(.btn-nav) { display: none; }
+}

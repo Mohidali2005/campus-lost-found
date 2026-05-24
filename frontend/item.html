@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item Detail — LUMS Lost &amp; Found</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- ── Navigation ──────────────────────────────────────────────────────── -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="nav-brand">LUMS <span>Lost &amp; Found</span></a>
+            <div class="nav-links" id="nav-links"></div>
+        </div>
+    </nav>
+
+    <main class="page-content">
+        <div class="container">
+
+            <!-- Back link -->
+            <a href="index.html" class="text-muted" style="font-size: 0.9rem;">
+                &larr; Back to all items
+            </a>
+
+            <!-- Item detail section — filled by item.js renderItem() -->
+            <div id="item-detail">
+                <div class="spinner"></div>
+            </div>
+
+            <!-- ── Messages section ─────────────────────────────────────────── -->
+            <div class="messages-section">
+
+                <!-- Heading shows count e.g. "3 Messages" — set by item.js -->
+                <h2 id="messages-count">Messages</h2>
+
+                <!-- Message thread — filled by item.js renderMessages() -->
+                <div id="messages-list"></div>
+
+                <!-- ── Post a message form ───────────────────────────────────── -->
+                <div class="message-form">
+                    <h3>Leave a Message</h3>
+
+                    <!-- Shows "Posting as: Ali Hassan" or guest instruction -->
+                    <p id="posting-as" class="text-muted" style="font-size: 0.85rem; margin-bottom: 0.75rem;"></p>
+
+                    <!-- Alert area for success/error messages -->
+                    <div id="msg-alert"></div>
+
+                    <form id="message-form">
+
+                        <!-- Name field: hidden for logged-in users (see item.js setupMessageForm) -->
+                        <div class="form-group" id="sender-name-group">
+                            <label for="msg-sender-name">Your Name</label>
+                            <input
+                                type="text"
+                                id="msg-sender-name"
+                                placeholder="e.g. Ali Hassan"
+                            >
+                        </div>
+
+                        <!-- Message body -->
+                        <div class="form-group">
+                            <label for="msg-body">Message</label>
+                            <textarea
+                                id="msg-body"
+                                rows="3"
+                                placeholder="e.g. I saw this near the library. Check with the front desk!"
+                                required
+                            ></textarea>
+                        </div>
+
+                        <button type="submit" id="msg-submit" class="btn btn-primary">
+                            Send Message
+                        </button>
+                    </form>
+                </div>
+
+            </div><!-- end messages-section -->
+
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/item.js"></script>
+</body>
+</html>

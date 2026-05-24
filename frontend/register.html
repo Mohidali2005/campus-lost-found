@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register — LUMS Lost &amp; Found</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="nav-brand">LUMS <span>Lost &amp; Found</span></a>
+            <div class="nav-links" id="nav-links"></div>
+        </div>
+    </nav>
+
+    <main class="page-content">
+        <div class="container">
+            <div class="form-card">
+                <h1>Create Account</h1>
+                <p class="subtitle">
+                    Only LUMS students can register.
+                    You must use your official <strong>@lums.edu.pk</strong> email.
+                </p>
+
+                <!-- Alert area for error and success messages -->
+                <div id="register-alert"></div>
+
+                <form id="register-form">
+
+                    <div class="form-group">
+                        <label for="name">Full Name *</label>
+                        <input
+                            type="text"
+                            id="name"
+                            placeholder="e.g. Ali Hassan"
+                            required
+                            autocomplete="name"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">LUMS Email *</label>
+                        <input
+                            type="email"
+                            id="email"
+                            placeholder="24100123@lums.edu.pk"
+                            required
+                            autocomplete="email"
+                        >
+                        <div class="hint">Must be a valid @lums.edu.pk address</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="student-id">Student ID</label>
+                        <input
+                            type="text"
+                            id="student-id"
+                            placeholder="e.g. 24100123"
+                            autocomplete="off"
+                        >
+                        <div class="hint">Optional</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password *</label>
+                        <input
+                            type="password"
+                            id="password"
+                            required
+                            autocomplete="new-password"
+                            minlength="8"
+                        >
+                        <div class="hint">At least 8 characters</div>
+                    </div>
+
+                    <button type="submit" id="register-btn" class="btn btn-primary btn-full">
+                        Create Account
+                    </button>
+                </form>
+
+                <p class="text-center mt-2" style="font-size: 0.9rem;">
+                    Already have an account? <a href="login.html">Login here</a>
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Register page logic
+        document.addEventListener("DOMContentLoaded", async () => {
+            await updateNav();
+
+            // Already logged in → skip registration
+            if (isLoggedIn()) {
+                window.location.href = "index.html";
+                return;
+            }
+
+            document.getElementById("register-form").addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                clearAlert("register-alert");
+
+                const name      = document.getElementById("name").value;
+                const email     = document.getElementById("email").value;
+                const studentId = document.getElementById("student-id").value;
+                const password  = document.getElementById("password").value;
+                const btn       = document.getElementById("register-btn");
+
+                btn.disabled    = true;
+                btn.textContent = "Creating account...";
+
+                try {
+                    // POST /auth/register — backend validates @lums.edu.pk
+                    await apiPost("/auth/register", {
+                        name,
+                        email,
+                        password,
+                        student_id: studentId || null,  // send null if empty string
+                    });
+
+                    showAlert(
+                        "register-alert",
+                        "Account created! Redirecting to login...",
+                        "success"
+                    );
+
+                    // Go to login page after a short delay
+                    setTimeout(() => {
+                        window.location.href = "login.html";
+                    }, 1500);
+
+                } catch (err) {
+                    showAlert("register-alert", err.message);
+                    btn.disabled    = false;
+                    btn.textContent = "Create Account";
+                }
+            });
+        });
+    </script>
+</body>
+</html>

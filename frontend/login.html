@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — LUMS Lost &amp; Found</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="nav-brand">LUMS <span>Lost &amp; Found</span></a>
+            <div class="nav-links" id="nav-links"></div>
+        </div>
+    </nav>
+
+    <main class="page-content">
+        <div class="container">
+            <div class="form-card">
+                <h1>Login</h1>
+                <p class="subtitle">Sign in with your LUMS email address.</p>
+
+                <!-- Alert area for error messages -->
+                <div id="login-alert"></div>
+
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="email">LUMS Email</label>
+                        <input
+                            type="email"
+                            id="email"
+                            placeholder="24100123@lums.edu.pk"
+                            required
+                            autocomplete="email"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input
+                            type="password"
+                            id="password"
+                            required
+                            autocomplete="current-password"
+                        >
+                    </div>
+
+                    <button type="submit" id="login-btn" class="btn btn-primary btn-full">
+                        Login
+                    </button>
+                </form>
+
+                <p class="text-center mt-2" style="font-size: 0.9rem;">
+                    Don't have an account? <a href="register.html">Register here</a>
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Login page logic — kept inline since it's small and page-specific
+        document.addEventListener("DOMContentLoaded", async () => {
+            await updateNav();
+
+            // If already logged in, skip this page and go straight to the homepage
+            if (isLoggedIn()) {
+                window.location.href = "index.html";
+                return;
+            }
+
+            document.getElementById("login-form").addEventListener("submit", async (e) => {
+                e.preventDefault();  // stop the form from reloading the page
+
+                clearAlert("login-alert");
+
+                const email  = document.getElementById("email").value;
+                const password = document.getElementById("password").value;
+                const btn    = document.getElementById("login-btn");
+
+                btn.disabled    = true;
+                btn.textContent = "Logging in...";
+
+                try {
+                    // POST /auth/login → { access_token, token_type }
+                    const data = await apiPost("/auth/login", { email, password });
+
+                    // Store the JWT so all future requests include it
+                    saveToken(data.access_token);
+
+                    // Redirect to homepage
+                    window.location.href = "index.html";
+
+                } catch (err) {
+                    showAlert("login-alert", err.message);
+                    btn.disabled    = false;
+                    btn.textContent = "Login";
+                }
+            });
+        });
+    </script>
+</body>
+</html>
