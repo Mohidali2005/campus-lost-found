@@ -220,13 +220,24 @@ Changes to existing files:
 - Type and status dropdowns removed from the search bar — sidebar handles navigation
 - Search bar now has keyword + category only
 
-**Badge logic redesign**
-- Old: showed raw `item.type` (LOST/FOUND) + raw `item.status` (OPEN/RESOLVED) as two separate badges
-- New: single badge reflecting the item's LOGICAL state:
-  - `type=found` OR `status=resolved` → green **FOUND** badge
-  - `type=lost` AND `status=open`     → red **LOST** badge
-- Applied consistently in both `app.js` (cards) and `item.js` (detail page)
+**Badge logic redesign — 3 states**
+- Old (2-state): `type=found OR status=resolved` → green FOUND; else red LOST — misleading because a resolved lost item showed as "FOUND" implying a drop-off point
+- New (3-state), priority order:
+  - `status=resolved` (any type)       → gray **RESOLVED** badge (`.badge-resolved`) — case closed
+  - `type=found` + `status=open`       → green **FOUND** badge — item waiting at drop-off
+  - `type=lost` + `status=open`        → red **LOST** badge — still missing
+- Applied consistently in both `app.js` `renderItemCard()` and `item.js` `renderItem()`
 - Resolved cards are dimmed (`.card-resolved` CSS class) so open items stand out
+- `.badge-resolved` CSS class was already defined in `style.css` — no CSS changes needed
+
+**Email notifications on new message**
+- When someone messages a registered user's item, the poster gets an email at their `@lums.edu.pk` address
+- Uses Python stdlib `smtplib` — no new pip packages; recommended sender: Brevo free SMTP (brevo.com)
+- New file: `backend/services/email_service.py` — `send_message_notification()` function
+- Fires as a FastAPI `BackgroundTask` in `messages.py` `create_message()` — API response is never delayed
+- Skipped silently when: poster is a guest (no email), sender == poster, or SMTP not configured in `.env`
+- New config fields in `backend/config.py`: `smtp_host`, `smtp_port`, `smtp_user`, `smtp_password`, `smtp_from`
+- `.env.example` updated with Brevo SMTP template
 
 **Backend `GET /items` default status changed**
 - Was: `status: Optional[ItemStatus] = ItemStatus.open` (hid resolved items by default)

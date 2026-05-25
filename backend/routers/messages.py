@@ -15,12 +15,13 @@
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from backend.dependencies import get_db, get_optional_user
 from backend.models import Item, Message, User
 from backend.schemas import MessageCreate, MessageOut
+from backend.services.email_service import send_message_notification
 
 
 # ── Router setup ──────────────────────────────────────────────────────────────
@@ -62,6 +63,7 @@ def _get_item_or_404(item_id: int, db: Session) -> Item:
 def create_message(
     item_id: int,                          # extracted from the URL path automatically by FastAPI
     body: MessageCreate,                   # JSON body: { "sender_name": "...", "body": "..." }
+    background_tasks: BackgroundTasks,     # FastAPI injects this — used to fire email after response
     current_user: Optional[User] = Depends(get_optional_user),  # None if guest
     db: Session = Depends(get_db),
 ):
@@ -89,9 +91,9 @@ def create_message(
     """
 
     # ── Step 1: Make sure the item exists ─────────────────────────────────────
-    # We can't post a message on an item that doesn't exist.
-    # _get_item_or_404 raises HTTP 404 automatically if not found.
-    _get_item_or_404(item_id, db)
+    # We store the returned item object (not just check for 404) because we need
+    # item.title, item.type, item.user_id, and item.user later for the email notification.
+    item = _get_item_or_404(item_id, db)
 
     # ── Step 2: Determine the sender name ─────────────────────────────────────
     if current_user:
@@ -122,6 +124,32 @@ def create_message(
     db.add(new_message)      # stage the INSERT
     db.commit()              # execute the SQL and commit
     db.refresh(new_message)  # reload so new_message.id and created_at are populated
+
+    # ── Step 4: Schedule email notification ───────────────────────────────────
+    # We collect the owner's email NOW while the DB session is still open.
+    # SQLAlchemy can lazy-load item.user within this session safely.
+    # We pass only plain values to the background task — no ORM objects —
+    # because the session will be closed by the time the task runs.
+    owner_email = None
+    if item.user_id and item.user:
+        # Only notify if the sender is NOT the item's own poster.
+        # (Posters sometimes message their own item to add info — no need to email themselves.)
+        sender_id = current_user.id if current_user else None
+        if sender_id != item.user_id:
+            owner_email = item.user.email   # the poster's @lums.edu.pk address
+
+    if owner_email:
+        # add_task() queues this function to run AFTER the HTTP response is sent.
+        # The student gets their 201 Created instantly; the email goes out in the background.
+        background_tasks.add_task(
+            send_message_notification,
+            to_email=owner_email,
+            item_title=item.title,
+            item_id=item.id,
+            item_type=item.type,
+            sender_name=new_message.sender_name,
+            message_preview=body.body,
+        )
 
     return new_message  # Pydantic serializes this into MessageOut format
 

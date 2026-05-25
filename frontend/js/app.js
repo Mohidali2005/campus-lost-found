@@ -157,14 +157,18 @@ function renderItems(items, total) {
 //
 // Badge logic:
 //   • type=found                   → green FOUND badge  (someone found something)
-//   • type=lost + status=open      → red   LOST  badge  (still missing)
-//   • type=lost + status=resolved  → green FOUND badge  (was returned to owner)
+//   • type=lost + status=open      → red   LOST     badge (still missing)
+//   • type=found + status=open     → green FOUND    badge (claimable, has drop-off)
+//   • status=resolved (any type)   → gray  RESOLVED badge (case closed, reunited with owner)
 function renderItemCard(item) {
-    // Determine the badge colour and label based on the item's actual state
-    const isFound = item.type === "found" || item.status === "resolved";
-    const badgeHtml = isFound
-        ? `<span class="badge badge-found">FOUND</span>`
-        : `<span class="badge badge-lost">LOST</span>`;
+    // 3-state badge: resolved takes priority, then found vs lost
+    // "FOUND" only shows when there is actually an item waiting at a drop-off point.
+    // "RESOLVED" means the case is closed — the owner got their item back.
+    const badgeHtml = item.status === "resolved"
+        ? `<span class="badge badge-resolved">RESOLVED</span>`
+        : item.type === "found"
+            ? `<span class="badge badge-found">FOUND</span>`
+            : `<span class="badge badge-lost">LOST</span>`;
 
     // Photo or emoji placeholder
     const imgSection = item.image_path
